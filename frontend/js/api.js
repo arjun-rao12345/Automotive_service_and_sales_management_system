@@ -95,6 +95,17 @@ const vehicleAPI = {
         return apiRequest(`/vehicles/${id}`, {
             method: 'DELETE'
         });
+    },
+
+    async getAllModels() {
+        return apiRequest('/vehicles/models/all');
+    },
+
+    async createModel(modelData) {
+        return apiRequest('/vehicles/models', {
+            method: 'POST',
+            body: JSON.stringify(modelData)
+        });
     }
 };
 
@@ -163,31 +174,60 @@ const employeeAPI = {
 // Inventory API functions
 const inventoryAPI = {
     async getAll(page = 1, limit = 10) {
-        return apiRequest(`/inventory?page=${page}&limit=${limit}`);
+        return apiRequest(`/inventory/parts?page=${page}&limit=${limit}`);
     },
 
     async getById(id) {
-        return apiRequest(`/inventory/${id}`);
+        return apiRequest(`/inventory/parts/${id}`);
     },
 
-    async create(inventoryData) {
-        return apiRequest('/inventory', {
+    async getAllSuppliers() {
+        return apiRequest(`/inventory/suppliers`);
+    },
+
+    async createSupplier(supplierData) {
+        return apiRequest('/inventory/suppliers', {
             method: 'POST',
-            body: JSON.stringify(inventoryData)
+            body: JSON.stringify(supplierData)
         });
     },
 
-    async update(id, inventoryData) {
-        return apiRequest(`/inventory/${id}`, {
+    async create(partData) {
+        return apiRequest('/inventory/parts', {
+            method: 'POST',
+            body: JSON.stringify(partData)
+        });
+    },
+
+    async update(id, partData) {
+        return apiRequest(`/inventory/parts/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(partData)
+        });
+    },
+
+    async delete(id) {
+        return apiRequest(`/inventory/parts/${id}`, {
+            method: 'DELETE'
+        });
+    },
+
+    async updateInventory(id, inventoryData) {
+        return apiRequest(`/inventory/inventory/${id}`, {
             method: 'PUT',
             body: JSON.stringify(inventoryData)
         });
     },
 
-    async delete(id) {
-        return apiRequest(`/inventory/${id}`, {
-            method: 'DELETE'
+    async createInventory(inventoryData) {
+        return apiRequest('/inventory/inventory', {
+            method: 'POST',
+            body: JSON.stringify(inventoryData)
         });
+    },
+
+    async getLowStock() {
+        return apiRequest(`/inventory/low-stock`);
     }
 };
 

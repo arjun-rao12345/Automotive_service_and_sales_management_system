@@ -103,14 +103,15 @@
 
     <!-- Vehicle Models Modal -->
     <div id="models-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Vehicle Models</h2>
+        <div class="modal-content" style="width: 95%; max-width: 1000px; max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="flex-shrink: 0;">
+                <h2 class="modal-title" id="models-title">Vehicle Models</h2>
                 <span class="close">&times;</span>
             </div>
-            <div style="padding: 1.5rem;">
-                <button id="add-model-btn" class="btn btn-primary" style="margin-bottom: 1rem;">Add New Model</button>
-                <div id="models-list">
+            <div style="padding: 1.5rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+                <input type="text" id="model-search" placeholder="Search models..." class="form-input" style="margin-bottom: 1rem; padding: 0.5rem;">
+                <button id="add-model-btn" class="btn btn-primary" style="margin-bottom: 1rem; width: fit-content;">Add New Model</button>
+                <div id="models-list" style="flex: 1; overflow-y: auto;">
                     <!-- Models will be loaded here -->
                 </div>
             </div>
@@ -294,13 +295,21 @@
         // Load vehicle models for dropdown
         async function loadModels() {
             try {
+                console.log('Loading vehicle models from API...');
                 const response = await API.vehicle.getAllModels();
-                if (response.success) {
+                console.log('API Response:', response);
+                
+                if (response.success && response.data) {
                     models = response.data;
+                    console.log(`Loaded ${models.length} models`);
                     populateModelSelect();
+                } else {
+                    console.error('Failed to load models - no success flag', response);
+                    models = [];
                 }
             } catch (error) {
                 console.error('Error loading models:', error);
+                models = [];
             }
         }
 
@@ -422,33 +431,68 @@
         // Load models list
         async function loadModelsList() {
             try {
+                console.log('Loading models list...');
                 await loadModels();
-                const modelsList = document.getElementById('models-list');
-                modelsList.innerHTML = `
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Brand</th>
-                                <th>Model</th>
-                                <th>Year</th>
-                                <th>Created</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${models.map(model => `
-                                <tr>
-                                    <td>${model.brand}</td>
-                                    <td>${model.model_name}</td>
-                                    <td>${model.year}</td>
-                                    <td>${API.utils.formatDate(model.created_at)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
+                console.log('Models array:', models);
+                
+                // Update title with count
+                const modelsTitle = document.getElementById('models-title');
+                modelsTitle.textContent = `Vehicle Models (${models.length} Total)`;
+                
+                displayAllModels(models);
+                
+                // Add search functionality
+                const searchInput = document.getElementById('model-search');
+                if (searchInput) {
+                    searchInput.value = ''; // Clear search
+                    searchInput.addEventListener('keyup', (e) => {
+                        const searchTerm = e.target.value.toLowerCase();
+                        const filtered = models.filter(model => 
+                            model.brand.toLowerCase().includes(searchTerm) ||
+                            model.model_name.toLowerCase().includes(searchTerm) ||
+                            model.year.toString().includes(searchTerm)
+                        );
+                        displayAllModels(filtered);
+                    });
+                }
             } catch (error) {
                 console.error('Error loading models list:', error);
+                API.utils.showAlert('Error loading models', 'error');
             }
+        }
+
+        // Display all models in table
+        function displayAllModels(modelsToDisplay) {
+            console.log('Displaying models:', modelsToDisplay);
+            const modelsList = document.getElementById('models-list');
+            
+            if (!modelsToDisplay || modelsToDisplay.length === 0) {
+                modelsList.innerHTML = '<p style="text-align: center; padding: 1rem; color: #666;">No models found.</p>';
+                return;
+            }
+            
+            modelsList.innerHTML = `
+                <table class="table" style="font-size: 0.9rem;">
+                    <thead style="position: sticky; top: 0; background-color: #f3f4f6; z-index: 10;">
+                        <tr>
+                            <th style="padding: 0.5rem;">Brand</th>
+                            <th style="padding: 0.5rem;">Model</th>
+                            <th style="padding: 0.5rem;">Year</th>
+                            <th style="padding: 0.5rem;">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${modelsToDisplay.map(model => `
+                            <tr style="border-bottom: 1px solid #e5e7eb;">
+                                <td style="padding: 0.5rem;">${model.brand || 'N/A'}</td>
+                                <td style="padding: 0.5rem;">${model.model_name || 'N/A'}</td>
+                                <td style="padding: 0.5rem;">${model.year || 'N/A'}</td>
+                                <td style="padding: 0.5rem;">${model.created_at ? API.utils.formatDate(model.created_at) : 'N/A'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
         }
 
         // Add model

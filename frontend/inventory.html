@@ -107,12 +107,12 @@
 
     <!-- Suppliers Modal -->
     <div id="suppliers-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <h2 class="modal-title">Suppliers</h2>
                 <span class="close">&times;</span>
             </div>
-            <div style="padding: 1.5rem;">
+            <div style="padding: 1.5rem; flex: 1; overflow-y: auto;">
                 <button id="add-supplier-btn" class="btn btn-primary" style="margin-bottom: 1rem;">Add New Supplier</button>
                 <div id="suppliers-list">
                     <!-- Suppliers will be loaded here -->
