@@ -1,6 +1,6 @@
 // API utility functions for Automotive Service & Sales Management System
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'http://localhost:5000/api';
 
 // Generic API request function
 async function apiRequest(endpoint, options = {}) {
