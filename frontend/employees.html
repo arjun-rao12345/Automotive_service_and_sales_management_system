@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employees - Automotive Service & Sales Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-brand">
+                🚗 AutoService Pro
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="customers.html">Customers</a></li>
+                <li><a href="vehicles.html">Vehicles</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="employees.html" class="active">Employees</a></li>
+                <li><a href="inventory.html">Inventory</a></li>
+                <li><a href="invoices.html">Invoices</a></li>
+                <li><a href="feedback.html">Feedback</a></li>
+                <li><a href="insurance.html">Insurance</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>Employee Management</h1>
+            <p>Manage employees and technicians</p>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Employees</h2>
+                <div style="display: flex; gap: 1rem;">
+                    <button id="add-employee-btn" class="btn btn-primary">Add Employee</button>
+                    <button id="manage-technicians-btn" class="btn btn-secondary">Manage Technicians</button>
+                </div>
+            </div>
+
+            <!-- Employees Table -->
+            <div id="employees-table-container">
+                <!-- Table will be loaded here -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination-container" class="pagination">
+                <!-- Pagination will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Employee Modal -->
+    <div id="employee-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="employee-modal-title" class="modal-title">Add Employee</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="employee-form">
+                <input type="hidden" id="employee-id" name="employee_id">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="employee-name" class="form-label">Name *</label>
+                        <input type="text" id="employee-name" name="name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="employee-role" class="form-label">Role *</label>
+                        <select id="employee-role" name="role" class="form-input" required>
+                            <option value="">Select Role</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Technician">Technician</option>
+                            <option value="Receptionist">Receptionist</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Mechanic">Mechanic</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="employee-phone" class="form-label">Phone *</label>
+                        <input type="tel" id="employee-phone" name="phone" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="employee-email" class="form-label">Email *</label>
+                        <input type="email" id="employee-email" name="email" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hire-date" class="form-label">Hire Date *</label>
+                        <input type="date" id="hire-date" name="hire_date" class="form-input" required>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Employee</button>
+                    <button type="button" id="employee-cancel-btn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Technicians Modal -->
+    <div id="technicians-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Technicians</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div style="padding: 1.5rem;">
+                <button id="add-technician-btn" class="btn btn-primary" style="margin-bottom: 1rem;">Add Technician</button>
+                <div id="technicians-list">
+                    <!-- Technicians will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Technician Modal -->
+    <div id="add-technician-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Technician</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="technician-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tech-employee-select" class="form-label">Employee *</label>
+                        <select id="tech-employee-select" name="employee_id" class="form-input" required>
+                            <option value="">Select Employee</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="specialization" class="form-label">Specialization *</label>
+                        <select id="specialization" name="specialization" class="form-input" required>
+                            <option value="">Select Specialization</option>
+                            <option value="General">General</option>
+                            <option value="Engine">Engine</option>
+                            <option value="Transmission">Transmission</option>
+                            <option value="Brakes">Brakes</option>
+                            <option value="Electrical">Electrical</option>
+                            <option value="Air Conditioning">Air Conditioning</option>
+                            <option value="Body Work">Body Work</option>
+                            <option value="Diagnostics">Diagnostics</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="certification-level" class="form-label">Certification Level</label>
+                        <select id="certification-level" name="certification_level" class="form-input">
+                            <option value="Junior">Junior</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Senior">Senior</option>
+                            <option value="Master">Master</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Technician</button>
+                    <button type="button" id="technician-cancel-btn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alert-container" style="position: fixed; top: 20px; right: 20px; z-index: 1000;"></div>
+
+    <!-- Load API utilities -->
+    <script src="js/api.js"></script>
+    <script>
+        let currentPage = 1;
+        let employees = [];
+
+        // DOM elements
+        const employeesTableContainer = document.getElementById('employees-table-container');
+        const paginationContainer = document.getElementById('pagination-container');
+        const employeeModal = document.getElementById('employee-modal');
+        const employeeForm = document.getElementById('employee-form');
+        const techniciansModal = document.getElementById('technicians-modal');
+        const addTechnicianModal = document.getElementById('add-technician-modal');
+        const technicianForm = document.getElementById('technician-form');
+
+        // Modal controls
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.onclick = () => {
+                employeeModal.style.display = 'none';
+                techniciansModal.style.display = 'none';
+                addTechnicianModal.style.display = 'none';
+            };
+        });
+
+        document.getElementById('employee-cancel-btn').onclick = () => employeeModal.style.display = 'none';
+        document.getElementById('technician-cancel-btn').onclick = () => addTechnicianModal.style.display = 'none';
+
+        window.onclick = (event) => {
+            if (event.target === employeeModal) employeeModal.style.display = 'none';
+            if (event.target === techniciansModal) techniciansModal.style.display = 'none';
+            if (event.target === addTechnicianModal) addTechnicianModal.style.display = 'none';
+        };
+
+        // Load employees
+        async function loadEmployees(page = 1) {
+            try {
+                API.utils.showLoading(employeesTableContainer);
+
+                const response = await API.employee.getAll(page);
+                if (response.success) {
+                    displayEmployees(response.data.employees || response.data);
+                    displayPagination(response.data.pagination);
+                } else {
+                    API.utils.showAlert('Failed to load employees', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading employees:', error);
+                API.utils.showAlert('Error loading employees', 'error');
+                employeesTableContainer.innerHTML = '<p>Error loading employees. Please try again.</p>';
+            }
+        }
+
+        // Display employees in table
+        function displayEmployees(employees) {
+            if (employees.length === 0) {
+                employeesTableContainer.innerHTML = '<p>No employees found.</p>';
+                return;
+            }
+
+            const tableHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Hire Date</th>
+                            <th>Technician</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${employees.map(employee => `
+                            <tr>
+                                <td>${employee.employee_id}</td>
+                                <td>${employee.name}</td>
+                                <td>${employee.role}</td>
+                                <td>${employee.phone}</td>
+                                <td>${employee.email}</td>
+                                <td>${API.utils.formatDate(employee.hire_date)}</td>
+                                <td>
+                                    ${employee.technician_id ?
+                                        `<span style="color: #10b981;">✓ ${employee.specialization || 'General'}</span>` :
+                                        '<span style="color: #6b7280;">No</span>'
+                                    }
+                                </td>
+                                <td>
+                                    <button onclick="editEmployee(${employee.employee_id})" class="btn btn-secondary btn-sm">Edit</button>
+                                    <button onclick="viewEmployee(${employee.employee_id})" class="btn btn-warning btn-sm">View</button>
+                                    <button onclick="deleteEmployee(${employee.employee_id})" class="btn btn-danger btn-sm">Delete</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            employeesTableContainer.innerHTML = tableHTML;
+        }
+
+        // Display pagination
+        function displayPagination(pagination) {
+            if (!pagination || pagination.totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            if (pagination.page > 1) {
+                paginationHTML += `<button class="pagination-btn" onclick="changePage(${pagination.page - 1})">Previous</button>`;
+            }
+
+            for (let i = Math.max(1, pagination.page - 2); i <= Math.min(pagination.totalPages, pagination.page + 2); i++) {
+                paginationHTML += `<button class="pagination-btn ${i === pagination.page ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            }
+
+            if (pagination.page < pagination.totalPages) {
+                paginationHTML += `<button class="pagination-btn" onclick="changePage(${pagination.page + 1})">Next</button>`;
+            }
+
+            paginationContainer.innerHTML = paginationHTML;
+        }
+
+        // Change page
+        function changePage(page) {
+            currentPage = page;
+            loadEmployees(currentPage);
+        }
+
+        // Add new employee
+        function addEmployee() {
+            document.getElementById('employee-modal-title').textContent = 'Add Employee';
+            employeeForm.reset();
+            document.getElementById('employee-id').value = '';
+            // Set default hire date to today
+            document.getElementById('hire-date').value = new Date().toISOString().split('T')[0];
+            employeeModal.style.display = 'block';
+        }
+
+        // Edit employee
+        async function editEmployee(id) {
+            try {
+                const response = await API.employee.getById(id);
+                if (response.success) {
+                    const employee = response.data;
+                    document.getElementById('employee-modal-title').textContent = 'Edit Employee';
+                    document.getElementById('employee-id').value = employee.employee_id;
+                    document.getElementById('employee-name').value = employee.name;
+                    document.getElementById('employee-role').value = employee.role;
+                    document.getElementById('employee-phone').value = employee.phone;
+                    document.getElementById('employee-email').value = employee.email;
+                    document.getElementById('hire-date').value = employee.hire_date.split('T')[0];
+                    employeeModal.style.display = 'block';
+                } else {
+                    API.utils.showAlert('Failed to load employee details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading employee:', error);
+                API.utils.showAlert('Error loading employee details', 'error');
+            }
+        }
+
+        // View employee details
+        async function viewEmployee(id) {
+            try {
+                const response = await API.employee.getById(id);
+                if (response.success) {
+                    const employee = response.data;
+                    let detailsHTML = `
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h2 class="modal-title">Employee Details</h2>
+                                <span class="close" onclick="this.closest('.modal').style.display='none'">&times;</span>
+                            </div>
+                            <div style="padding: 1.5rem;">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                                    <div><strong>ID:</strong> ${employee.employee_id}</div>
+                                    <div><strong>Name:</strong> ${employee.name}</div>
+                                    <div><strong>Role:</strong> ${employee.role}</div>
+                                    <div><strong>Phone:</strong> ${employee.phone}</div>
+                                    <div><strong>Email:</strong> ${employee.email}</div>
+                                    <div><strong>Hire Date:</strong> ${API.utils.formatDate(employee.hire_date)}</div>
+                                    <div><strong>Created:</strong> ${API.utils.formatDate(employee.created_at)}</div>
+                                </div>
+                    `;
+
+                    if (employee.technician_id) {
+                        detailsHTML += `
+                            <h3>Technician Information</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                                <div><strong>Technician ID:</strong> ${employee.technician_id}</div>
+                                <div><strong>Specialization:</strong> ${employee.specialization}</div>
+                                <div><strong>Certification Level:</strong> ${employee.certification_level}</div>
+                            </div>
+                        `;
+                    } else {
+                        detailsHTML += '<p>This employee is not registered as a technician.</p>';
+                    }
+
+                    detailsHTML += `
+                            </div>
+                        </div>
+                    `;
+
+                    const detailsModal = document.createElement('div');
+                    detailsModal.className = 'modal';
+                    detailsModal.innerHTML = detailsHTML;
+                    document.body.appendChild(detailsModal);
+                    detailsModal.style.display = 'block';
+                } else {
+                    API.utils.showAlert('Failed to load employee details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading employee details:', error);
+                API.utils.showAlert('Error loading employee details', 'error');
+            }
+        }
+
+        // Delete employee
+        async function deleteEmployee(id) {
+            if (!confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await API.employee.delete(id);
+                if (response.success) {
+                    API.utils.showAlert('Employee deleted successfully', 'success');
+                    loadEmployees(currentPage);
+                } else {
+                    API.utils.showAlert('Failed to delete employee', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting employee:', error);
+                API.utils.showAlert('Error deleting employee', 'error');
+            }
+        }
+
+        // Manage technicians
+        function manageTechnicians() {
+            loadTechniciansList();
+            techniciansModal.style.display = 'block';
+        }
+
+        // Load technicians list
+        async function loadTechniciansList() {
+            try {
+                const response = await API.employee.getAllTechnicians();
+                if (response.success) {
+                    const technicians = response.data;
+                    const techniciansList = document.getElementById('technicians-list');
+
+                    techniciansList.innerHTML = `
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Specialization</th>
+                                    <th>Certification</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${technicians.map(tech => `
+                                    <tr>
+                                        <td>${tech.name}</td>
+                                        <td>${tech.specialization}</td>
+                                        <td>${tech.certification_level}</td>
+                                        <td>${tech.phone}</td>
+                                        <td>${tech.email}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading technicians list:', error);
+            }
+        }
+
+        // Add technician
+        function addTechnician() {
+            technicianForm.reset();
+            loadEmployeesForTechnicianSelect();
+            addTechnicianModal.style.display = 'block';
+        }
+
+        // Load employees for technician select (only non-technicians)
+        async function loadEmployeesForTechnicianSelect() {
+            try {
+                const response = await API.employee.getAll(1, 1000);
+                if (response.success) {
+                    const allEmployees = response.data.employees || response.data;
+                    const nonTechnicians = allEmployees.filter(emp => !emp.technician_id);
+
+                    const select = document.getElementById('tech-employee-select');
+                    select.innerHTML = '<option value="">Select Employee</option>';
+                    nonTechnicians.forEach(employee => {
+                        select.innerHTML += `<option value="${employee.employee_id}">${employee.name} - ${employee.role}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading employees for technician select:', error);
+            }
+        }
+
+        // Handle employee form submission
+        employeeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(employeeForm);
+            const employeeData = {
+                name: formData.get('name'),
+                role: formData.get('role'),
+                phone: formData.get('phone'),
+                email: formData.get('email'),
+                hire_date: formData.get('hire_date')
+            };
+
+            const employeeId = formData.get('employee_id');
+
+            try {
+                let response;
+                if (employeeId) {
+                    response = await API.employee.update(employeeId, employeeData);
+                } else {
+                    response = await API.employee.create(employeeData);
+                }
+
+                if (response.success) {
+                    API.utils.showAlert(`Employee ${employeeId ? 'updated' : 'created'} successfully`, 'success');
+                    employeeModal.style.display = 'none';
+                    loadEmployees(currentPage);
+                } else {
+                    API.utils.showAlert(`Failed to ${employeeId ? 'update' : 'create'} employee`, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving employee:', error);
+                API.utils.showAlert(`Error ${employeeId ? 'updating' : 'creating'} employee`, 'error');
+            }
+        });
+
+        // Handle technician form submission
+        technicianForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(technicianForm);
+            const technicianData = {
+                employee_id: formData.get('employee_id'),
+                specialization: formData.get('specialization'),
+                certification_level: formData.get('certification_level')
+            };
+
+            try {
+                const response = await API.employee.createTechnician(technicianData);
+                if (response.success) {
+                    API.utils.showAlert('Technician created successfully', 'success');
+                    addTechnicianModal.style.display = 'none';
+                    loadTechniciansList();
+                    loadEmployees(currentPage); // Refresh to show technician status
+                } else {
+                    API.utils.showAlert('Failed to create technician', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating technician:', error);
+                API.utils.showAlert('Error creating technician', 'error');
+            }
+        });
+
+        // Event listeners
+        document.getElementById('add-employee-btn').addEventListener('click', addEmployee);
+        document.getElementById('manage-technicians-btn').addEventListener('click', manageTechnicians);
+        document.getElementById('add-technician-btn').addEventListener('click', addTechnician);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEmployees();
+        });
+    </script>
+</body>
+</html>

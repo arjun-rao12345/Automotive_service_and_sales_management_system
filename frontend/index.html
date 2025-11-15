@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automotive Service & Sales Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-brand">
+                🚗 AutoService Pro
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="customers.html">Customers</a></li>
+                <li><a href="vehicles.html">Vehicles</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="employees.html">Employees</a></li>
+                <li><a href="inventory.html">Inventory</a></li>
+                <li><a href="invoices.html">Invoices</a></li>
+                <li><a href="feedback.html">Feedback</a></li>
+                <li><a href="insurance.html">Insurance</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="page-header">
+            <h1>Welcome to AutoService Pro</h1>
+            <p>Comprehensive management system for automotive service and sales operations</p>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">🚗</div>
+                <div class="stat-label">Vehicle Management</div>
+                <p>Track and manage customer vehicles with detailed service history</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">👥</div>
+                <div class="stat-label">Customer Relations</div>
+                <p>Maintain comprehensive customer profiles and interaction history</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">🔧</div>
+                <div class="stat-label">Service Tracking</div>
+                <p>Monitor service schedules, maintenance, and repair records</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">📊</div>
+                <div class="stat-label">Analytics Dashboard</div>
+                <p>Get insights with comprehensive reporting and analytics</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Quick Actions</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <a href="customers.html" class="btn btn-primary">
+                    👥 Manage Customers
+                </a>
+                <a href="vehicles.html" class="btn btn-primary">
+                    🚗 Add New Vehicle
+                </a>
+                <a href="services.html" class="btn btn-secondary">
+                    🔧 Schedule Service
+                </a>
+                <a href="invoices.html" class="btn btn-secondary">
+                    📄 Generate Invoice
+                </a>
+                <a href="dashboard.html" class="btn btn-warning">
+                    📊 View Dashboard
+                </a>
+                <a href="inventory.html" class="btn btn-warning">
+                    📦 Check Inventory
+                </a>
+            </div>
+        </div>
+
+        <!-- System Overview -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">System Overview</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                <div>
+                    <h3>Core Features</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 0.5rem;">✓ Customer management with contact details</li>
+                        <li style="margin-bottom: 0.5rem;">✓ Vehicle registration and tracking</li>
+                        <li style="margin-bottom: 0.5rem;">✓ Service scheduling and history</li>
+                        <li style="margin-bottom: 0.5rem;">✓ Employee management</li>
+                        <li style="margin-bottom: 0.5rem;">✓ Parts inventory control</li>
+                        <li style="margin-bottom: 0.5rem;">✓ Invoice generation and tracking</li>
+                        <li style="margin-bottom: 0.5rem;">✓ Customer feedback collection</li>
+                        <li style="margin-bottom: 0.5rem;">✓ Insurance record management</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Getting Started</h3>
+                    <ol style="padding-left: 1.5rem;">
+                        <li style="margin-bottom: 0.5rem;">Navigate to the Dashboard for an overview</li>
+                        <li style="margin-bottom: 0.5rem;">Add customers and their vehicles</li>
+                        <li style="margin-bottom: 0.5rem;">Schedule services and track progress</li>
+                        <li style="margin-bottom: 0.5rem;">Generate invoices for completed work</li>
+                        <li style="margin-bottom: 0.5rem;">Monitor inventory levels</li>
+                        <li style="margin-bottom: 0.5rem;">Collect and review customer feedback</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple navigation active state handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const navLinks = document.querySelectorAll('.navbar-menu a');
+
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

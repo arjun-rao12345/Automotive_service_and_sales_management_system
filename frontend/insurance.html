@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance - Automotive Service & Sales Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-brand">
+                🚗 AutoService Pro
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="customers.html">Customers</a></li>
+                <li><a href="vehicles.html">Vehicles</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="employees.html">Employees</a></li>
+                <li><a href="inventory.html">Inventory</a></li>
+                <li><a href="invoices.html">Invoices</a></li>
+                <li><a href="feedback.html">Feedback</a></li>
+                <li><a href="insurance.html" class="active">Insurance</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>Insurance Management</h1>
+            <p>Manage vehicle insurance policies and coverage</p>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Insurance Policies</h2>
+                <div style="display: flex; gap: 1rem;">
+                    <button id="add-insurance-btn" class="btn btn-primary">Add Insurance</button>
+                    <button id="expiring-soon-btn" class="btn btn-warning">Expiring Soon</button>
+                </div>
+            </div>
+
+            <!-- Insurance Table -->
+            <div id="insurance-table-container">
+                <!-- Table will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Insurance Modal -->
+    <div id="insurance-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="insurance-modal-title" class="modal-title">Add Insurance</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="insurance-form">
+                <input type="hidden" id="insurance-id" name="insurance_id">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vehicle-select" class="form-label">Vehicle *</label>
+                        <select id="vehicle-select" name="vehicle_id" class="form-input" required>
+                            <option value="">Select Vehicle</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="provider" class="form-label">Insurance Provider *</label>
+                        <input type="text" id="provider" name="provider" class="form-input" required placeholder="e.g., Geico, State Farm">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="policy-number" class="form-label">Policy Number *</label>
+                        <input type="text" id="policy-number" name="policy_number" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="coverage-amount" class="form-label">Coverage Amount *</label>
+                        <input type="number" id="coverage-amount" name="coverage_amount" class="form-input" step="0.01" min="0" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="expiry-date" class="form-label">Expiry Date *</label>
+                        <input type="date" id="expiry-date" name="expiry_date" class="form-input" required>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Insurance</button>
+                    <button type="button" id="insurance-cancel-btn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Expiring Soon Modal -->
+    <div id="expiring-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Insurance Expiring Soon</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div id="expiring-content" style="padding: 1.5rem;">
+                <!-- Expiring insurance will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alert-container" style="position: fixed; top: 20px; right: 20px; z-index: 1000;"></div>
+
+    <!-- Load API utilities -->
+    <script src="js/api.js"></script>
+    <script>
+        let vehicles = [];
+
+        // DOM elements
+        const insuranceTableContainer = document.getElementById('insurance-table-container');
+        const insuranceModal = document.getElementById('insurance-modal');
+        const insuranceForm = document.getElementById('insurance-form');
+        const expiringModal = document.getElementById('expiring-modal');
+
+        // Modal controls
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.onclick = () => {
+                insuranceModal.style.display = 'none';
+                expiringModal.style.display = 'none';
+            };
+        });
+
+        document.getElementById('insurance-cancel-btn').onclick = () => insuranceModal.style.display = 'none';
+
+        window.onclick = (event) => {
+            if (event.target === insuranceModal) insuranceModal.style.display = 'none';
+            if (event.target === expiringModal) expiringModal.style.display = 'none';
+        };
+
+        // Load insurance
+        async function loadInsurance() {
+            try {
+                API.utils.showLoading(insuranceTableContainer);
+
+                const response = await API.insurance.getAll();
+                if (response.success) {
+                    displayInsurance(response.data);
+                } else {
+                    API.utils.showAlert('Failed to load insurance', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading insurance:', error);
+                API.utils.showAlert('Error loading insurance', 'error');
+                insuranceTableContainer.innerHTML = '<p>Error loading insurance. Please try again.</p>';
+            }
+        }
+
+        // Display insurance in table
+        function displayInsurance(insurance) {
+            if (insurance.length === 0) {
+                insuranceTableContainer.innerHTML = '<p>No insurance policies found.</p>';
+                return;
+            }
+
+            const tableHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Vehicle</th>
+                            <th>Customer</th>
+                            <th>Provider</th>
+                            <th>Policy Number</th>
+                            <th>Coverage</th>
+                            <th>Expiry Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${insurance.map(policy => {
+                            const expiryDate = new Date(policy.expiry_date);
+                            const today = new Date();
+                            const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                            
+                            let statusText = 'Active';
+                            let statusColor = '#16a34a';
+                            
+                            if (daysUntilExpiry < 0) {
+                                statusText = 'Expired';
+                                statusColor = '#dc2626';
+                            } else if (daysUntilExpiry <= 30) {
+                                statusText = `Expires in ${daysUntilExpiry} days`;
+                                statusColor = '#d97706';
+                            }
+
+                            return `
+                                <tr>
+                                    <td>${policy.insurance_id}</td>
+                                    <td>${policy.brand} ${policy.model_name} ${policy.year}<br><small>${policy.registration_no}</small></td>
+                                    <td>${policy.customer_name}</td>
+                                    <td>${policy.provider}</td>
+                                    <td>${policy.policy_number}</td>
+                                    <td>${API.utils.formatCurrency(policy.coverage_amount)}</td>
+                                    <td>${API.utils.formatDate(policy.expiry_date)}</td>
+                                    <td>
+                                        <span style="color: ${statusColor}; font-weight: 500;">
+                                            ${statusText}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button onclick="editInsurance(${policy.insurance_id})" class="btn btn-secondary btn-sm">Edit</button>
+                                        <button onclick="viewInsurance(${policy.insurance_id})" class="btn btn-warning btn-sm">View</button>
+                                        <button onclick="deleteInsurance(${policy.insurance_id})" class="btn btn-danger btn-sm">Delete</button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            insuranceTableContainer.innerHTML = tableHTML;
+        }
+
+        // Load vehicles for dropdown
+        async function loadVehicles() {
+            try {
+                const response = await API.vehicle.getAll(1, 1000);
+                if (response.success) {
+                    vehicles = response.data.vehicles || response.data;
+                    populateVehicleSelect();
+                }
+            } catch (error) {
+                console.error('Error loading vehicles:', error);
+            }
+        }
+
+        // Populate vehicle select
+        function populateVehicleSelect() {
+            const select = document.getElementById('vehicle-select');
+            select.innerHTML = '<option value="">Select Vehicle</option>';
+            vehicles.forEach(vehicle => {
+                select.innerHTML += `<option value="${vehicle.vehicle_id}">${vehicle.registration_no} - ${vehicle.brand} ${vehicle.model_name} ${vehicle.year}</option>`;
+            });
+        }
+
+        // Add new insurance
+        function addInsurance() {
+            document.getElementById('insurance-modal-title').textContent = 'Add Insurance';
+            insuranceForm.reset();
+            document.getElementById('insurance-id').value = '';
+            insuranceModal.style.display = 'block';
+        }
+
+        // Edit insurance
+        async function editInsurance(id) {
+            try {
+                // Note: Get by ID endpoint might not exist, using getAll and filtering
+                const response = await API.insurance.getAll();
+                if (response.success) {
+                    const policy = response.data.find(p => p.insurance_id === id);
+                    if (policy) {
+                        document.getElementById('insurance-modal-title').textContent = 'Edit Insurance';
+                        document.getElementById('insurance-id').value = policy.insurance_id;
+                        document.getElementById('vehicle-select').value = policy.vehicle_id;
+                        document.getElementById('provider').value = policy.provider;
+                        document.getElementById('policy-number').value = policy.policy_number;
+                        document.getElementById('coverage-amount').value = policy.coverage_amount;
+                        document.getElementById('expiry-date').value = policy.expiry_date.split('T')[0];
+                        insuranceModal.style.display = 'block';
+                    } else {
+                        API.utils.showAlert('Insurance policy not found', 'error');
+                    }
+                } else {
+                    API.utils.showAlert('Failed to load insurance details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading insurance:', error);
+                API.utils.showAlert('Error loading insurance details', 'error');
+            }
+        }
+
+        // View insurance details
+        async function viewInsurance(id) {
+            try {
+                const response = await API.insurance.getAll();
+                if (response.success) {
+                    const policy = response.data.find(p => p.insurance_id === id);
+                    if (policy) {
+                        let detailsHTML = `
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h2 class="modal-title">Insurance Details</h2>
+                                    <span class="close" onclick="this.closest('.modal').style.display='none'">&times;</span>
+                                </div>
+                                <div style="padding: 1.5rem;">
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                                        <div><strong>Insurance ID:</strong> ${policy.insurance_id}</div>
+                                        <div><strong>Vehicle:</strong> ${policy.brand} ${policy.model_name} ${policy.year}</div>
+                                        <div><strong>Registration:</strong> ${policy.registration_no}</div>
+                                        <div><strong>VIN:</strong> ${policy.vin}</div>
+                                        <div><strong>Customer:</strong> ${policy.customer_name}</div>
+                                        <div><strong>Provider:</strong> ${policy.provider}</div>
+                                        <div><strong>Policy Number:</strong> ${policy.policy_number}</div>
+                                        <div><strong>Coverage Amount:</strong> ${API.utils.formatCurrency(policy.coverage_amount)}</div>
+                                        <div><strong>Expiry Date:</strong> ${API.utils.formatDate(policy.expiry_date)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        const detailsModal = document.createElement('div');
+                        detailsModal.className = 'modal';
+                        detailsModal.innerHTML = detailsHTML;
+                        document.body.appendChild(detailsModal);
+                        detailsModal.style.display = 'block';
+                    } else {
+                        API.utils.showAlert('Insurance policy not found', 'error');
+                    }
+                } else {
+                    API.utils.showAlert('Failed to load insurance details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading insurance details:', error);
+                API.utils.showAlert('Error loading insurance details', 'error');
+            }
+        }
+
+        // Delete insurance
+        async function deleteInsurance(id) {
+            if (!confirm('Are you sure you want to delete this insurance policy? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await API.insurance.delete(id);
+                if (response.success) {
+                    API.utils.showAlert('Insurance policy deleted successfully', 'success');
+                    loadInsurance();
+                } else {
+                    API.utils.showAlert('Failed to delete insurance policy', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting insurance:', error);
+                API.utils.showAlert('Error deleting insurance policy', 'error');
+            }
+        }
+
+        // Show expiring soon
+        async function showExpiringSoon() {
+            try {
+                const response = await API.insurance.getAll();
+                if (response.success) {
+                    const allInsurance = response.data;
+                    const today = new Date();
+                    const thirtyDaysFromNow = new Date();
+                    thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+                    const expiringSoon = allInsurance.filter(policy => {
+                        const expiryDate = new Date(policy.expiry_date);
+                        return expiryDate >= today && expiryDate <= thirtyDaysFromNow;
+                    });
+
+                    const expiringContent = document.getElementById('expiring-content');
+
+                    if (expiringSoon.length === 0) {
+                        expiringContent.innerHTML = '<p>No insurance policies expiring within 30 days.</p>';
+                    } else {
+                        expiringContent.innerHTML = `
+                            <div style="margin-bottom: 1rem; color: #d97706; font-weight: 500;">
+                                ${expiringSoon.length} policy(ies) expiring within 30 days
+                            </div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Vehicle</th>
+                                        <th>Customer</th>
+                                        <th>Provider</th>
+                                        <th>Policy Number</th>
+                                        <th>Expiry Date</th>
+                                        <th>Days Left</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${expiringSoon.map(policy => {
+                                        const expiryDate = new Date(policy.expiry_date);
+                                        const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                                        return `
+                                            <tr>
+                                                <td>${policy.brand} ${policy.model_name} ${policy.year}<br><small>${policy.registration_no}</small></td>
+                                                <td>${policy.customer_name}</td>
+                                                <td>${policy.provider}</td>
+                                                <td>${policy.policy_number}</td>
+                                                <td>${API.utils.formatDate(policy.expiry_date)}</td>
+                                                <td style="color: ${daysLeft <= 7 ? '#dc2626' : '#d97706'}; font-weight: 500;">${daysLeft} days</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    }
+
+                    expiringModal.style.display = 'block';
+                } else {
+                    API.utils.showAlert('Failed to load insurance data', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading expiring insurance:', error);
+                API.utils.showAlert('Error loading expiring insurance', 'error');
+            }
+        }
+
+        // Handle insurance form submission
+        insuranceForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(insuranceForm);
+            const insuranceData = {
+                vehicle_id: formData.get('vehicle_id'),
+                provider: formData.get('provider'),
+                policy_number: formData.get('policy_number'),
+                coverage_amount: formData.get('coverage_amount'),
+                expiry_date: formData.get('expiry_date')
+            };
+
+            const insuranceId = formData.get('insurance_id');
+
+            try {
+                let response;
+                if (insuranceId) {
+                    response = await API.insurance.update(insuranceId, insuranceData);
+                } else {
+                    response = await API.insurance.create(insuranceData);
+                }
+
+                if (response.success) {
+                    API.utils.showAlert(`Insurance ${insuranceId ? 'updated' : 'created'} successfully`, 'success');
+                    insuranceModal.style.display = 'none';
+                    loadInsurance();
+                } else {
+                    API.utils.showAlert(`Failed to ${insuranceId ? 'update' : 'create'} insurance`, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving insurance:', error);
+                API.utils.showAlert(`Error ${insuranceId ? 'updating' : 'creating'} insurance`, 'error');
+            }
+        });
+
+        // Event listeners
+        document.getElementById('add-insurance-btn').addEventListener('click', addInsurance);
+        document.getElementById('expiring-soon-btn').addEventListener('click', showExpiringSoon);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadInsurance();
+            loadVehicles();
+        });
+    </script>
+</body>
+</html>

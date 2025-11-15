@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicles - Automotive Service & Sales Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-brand">
+                🚗 AutoService Pro
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="customers.html">Customers</a></li>
+                <li><a href="vehicles.html" class="active">Vehicles</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="employees.html">Employees</a></li>
+                <li><a href="inventory.html">Inventory</a></li>
+                <li><a href="invoices.html">Invoices</a></li>
+                <li><a href="feedback.html">Feedback</a></li>
+                <li><a href="insurance.html">Insurance</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>Vehicle Management</h1>
+            <p>Manage customer vehicles and vehicle models</p>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Vehicles</h2>
+                <div style="display: flex; gap: 1rem;">
+                    <button id="add-vehicle-btn" class="btn btn-primary">Add New Vehicle</button>
+                    <button id="manage-models-btn" class="btn btn-secondary">Manage Models</button>
+                </div>
+            </div>
+
+            <!-- Vehicles Table -->
+            <div id="vehicles-table-container">
+                <!-- Table will be loaded here -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination-container" class="pagination">
+                <!-- Pagination will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Vehicle Modal -->
+    <div id="vehicle-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="vehicle-modal-title" class="modal-title">Add Vehicle</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="vehicle-form">
+                <input type="hidden" id="vehicle-id" name="vehicle_id">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="customer-select" class="form-label">Customer *</label>
+                        <select id="customer-select" name="customer_id" class="form-input" required>
+                            <option value="">Select Customer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="model-select" class="form-label">Vehicle Model *</label>
+                        <select id="model-select" name="model_id" class="form-input" required>
+                            <option value="">Select Model</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="registration-no" class="form-label">Registration Number *</label>
+                        <input type="text" id="registration-no" name="registration_no" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vin" class="form-label">VIN (Vehicle Identification Number)</label>
+                        <input type="text" id="vin" name="vin" class="form-input">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Vehicle</button>
+                    <button type="button" id="vehicle-cancel-btn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vehicle Models Modal -->
+    <div id="models-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Vehicle Models</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div style="padding: 1.5rem;">
+                <button id="add-model-btn" class="btn btn-primary" style="margin-bottom: 1rem;">Add New Model</button>
+                <div id="models-list">
+                    <!-- Models will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Model Modal -->
+    <div id="add-model-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Vehicle Model</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="model-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="brand" class="form-label">Brand *</label>
+                        <input type="text" id="brand" name="brand" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="model-name" class="form-label">Model Name *</label>
+                        <input type="text" id="model-name" name="model_name" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="year" class="form-label">Year *</label>
+                        <input type="number" id="year" name="year" class="form-input" min="1900" max="2030" required>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Model</button>
+                    <button type="button" id="model-cancel-btn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alert-container" style="position: fixed; top: 20px; right: 20px; z-index: 1000;"></div>
+
+    <!-- Load API utilities -->
+    <script src="js/api.js"></script>
+    <script>
+        let currentPage = 1;
+        let customers = [];
+        let models = [];
+
+        // DOM elements
+        const vehiclesTableContainer = document.getElementById('vehicles-table-container');
+        const paginationContainer = document.getElementById('pagination-container');
+        const vehicleModal = document.getElementById('vehicle-modal');
+        const vehicleForm = document.getElementById('vehicle-form');
+        const modelsModal = document.getElementById('models-modal');
+        const addModelModal = document.getElementById('add-model-modal');
+        const modelForm = document.getElementById('model-form');
+
+        // Modal controls
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.onclick = () => {
+                vehicleModal.style.display = 'none';
+                modelsModal.style.display = 'none';
+                addModelModal.style.display = 'none';
+            };
+        });
+
+        document.getElementById('vehicle-cancel-btn').onclick = () => vehicleModal.style.display = 'none';
+        document.getElementById('model-cancel-btn').onclick = () => addModelModal.style.display = 'none';
+
+        window.onclick = (event) => {
+            if (event.target === vehicleModal) vehicleModal.style.display = 'none';
+            if (event.target === modelsModal) modelsModal.style.display = 'none';
+            if (event.target === addModelModal) addModelModal.style.display = 'none';
+        };
+
+        // Load vehicles
+        async function loadVehicles(page = 1) {
+            try {
+                API.utils.showLoading(vehiclesTableContainer);
+
+                const response = await API.vehicle.getAll(page);
+                if (response.success) {
+                    displayVehicles(response.data.vehicles || response.data);
+                    displayPagination(response.data.pagination);
+                } else {
+                    API.utils.showAlert('Failed to load vehicles', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading vehicles:', error);
+                API.utils.showAlert('Error loading vehicles', 'error');
+                vehiclesTableContainer.innerHTML = '<p>Error loading vehicles. Please try again.</p>';
+            }
+        }
+
+        // Display vehicles in table
+        function displayVehicles(vehicles) {
+            if (vehicles.length === 0) {
+                vehiclesTableContainer.innerHTML = '<p>No vehicles found.</p>';
+                return;
+            }
+
+            const tableHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Registration</th>
+                            <th>Model</th>
+                            <th>Customer</th>
+                            <th>VIN</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${vehicles.map(vehicle => `
+                            <tr>
+                                <td>${vehicle.vehicle_id}</td>
+                                <td>${vehicle.registration_no}</td>
+                                <td>${vehicle.brand} ${vehicle.model_name} (${vehicle.year})</td>
+                                <td>${vehicle.customer_name}<br><small>${vehicle.customer_phone}</small></td>
+                                <td>${vehicle.vin || '-'}</td>
+                                <td>${API.utils.formatDate(vehicle.created_at)}</td>
+                                <td>
+                                    <button onclick="editVehicle(${vehicle.vehicle_id})" class="btn btn-secondary btn-sm">Edit</button>
+                                    <button onclick="viewVehicle(${vehicle.vehicle_id})" class="btn btn-warning btn-sm">View</button>
+                                    <button onclick="deleteVehicle(${vehicle.vehicle_id})" class="btn btn-danger btn-sm">Delete</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            vehiclesTableContainer.innerHTML = tableHTML;
+        }
+
+        // Display pagination
+        function displayPagination(pagination) {
+            if (!pagination || pagination.totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            if (pagination.page > 1) {
+                paginationHTML += `<button class="pagination-btn" onclick="changePage(${pagination.page - 1})">Previous</button>`;
+            }
+
+            for (let i = Math.max(1, pagination.page - 2); i <= Math.min(pagination.totalPages, pagination.page + 2); i++) {
+                paginationHTML += `<button class="pagination-btn ${i === pagination.page ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            }
+
+            if (pagination.page < pagination.totalPages) {
+                paginationHTML += `<button class="pagination-btn" onclick="changePage(${pagination.page + 1})">Next</button>`;
+            }
+
+            paginationContainer.innerHTML = paginationHTML;
+        }
+
+        // Change page
+        function changePage(page) {
+            currentPage = page;
+            loadVehicles(currentPage);
+        }
+
+        // Load customers for dropdown
+        async function loadCustomers() {
+            try {
+                const response = await API.customer.getAll(1, 1000); // Load all customers
+                if (response.success) {
+                    customers = response.data.customers || response.data;
+                    populateCustomerSelect();
+                }
+            } catch (error) {
+                console.error('Error loading customers:', error);
+            }
+        }
+
+        // Load vehicle models for dropdown
+        async function loadModels() {
+            try {
+                const response = await API.vehicle.getAllModels();
+                if (response.success) {
+                    models = response.data;
+                    populateModelSelect();
+                }
+            } catch (error) {
+                console.error('Error loading models:', error);
+            }
+        }
+
+        // Populate customer select
+        function populateCustomerSelect() {
+            const select = document.getElementById('customer-select');
+            select.innerHTML = '<option value="">Select Customer</option>';
+            customers.forEach(customer => {
+                select.innerHTML += `<option value="${customer.customer_id}">${customer.name} - ${customer.phone}</option>`;
+            });
+        }
+
+        // Populate model select
+        function populateModelSelect() {
+            const select = document.getElementById('model-select');
+            select.innerHTML = '<option value="">Select Model</option>';
+            models.forEach(model => {
+                select.innerHTML += `<option value="${model.model_id}">${model.brand} ${model.model_name} (${model.year})</option>`;
+            });
+        }
+
+        // Add new vehicle
+        function addVehicle() {
+            document.getElementById('vehicle-modal-title').textContent = 'Add Vehicle';
+            vehicleForm.reset();
+            document.getElementById('vehicle-id').value = '';
+            vehicleModal.style.display = 'block';
+        }
+
+        // Edit vehicle
+        async function editVehicle(id) {
+            try {
+                const response = await API.vehicle.getById(id);
+                if (response.success) {
+                    const vehicle = response.data;
+                    document.getElementById('vehicle-modal-title').textContent = 'Edit Vehicle';
+                    document.getElementById('vehicle-id').value = vehicle.vehicle_id;
+                    document.getElementById('customer-select').value = vehicle.customer_id;
+                    document.getElementById('model-select').value = vehicle.model_id;
+                    document.getElementById('registration-no').value = vehicle.registration_no;
+                    document.getElementById('vin').value = vehicle.vin || '';
+                    vehicleModal.style.display = 'block';
+                } else {
+                    API.utils.showAlert('Failed to load vehicle details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading vehicle:', error);
+                API.utils.showAlert('Error loading vehicle details', 'error');
+            }
+        }
+
+        // View vehicle details
+        async function viewVehicle(id) {
+            try {
+                const response = await API.vehicle.getById(id);
+                if (response.success) {
+                    const vehicle = response.data;
+                    let detailsHTML = `
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h2 class="modal-title">Vehicle Details</h2>
+                                <span class="close" onclick="this.closest('.modal').style.display='none'">&times;</span>
+                            </div>
+                            <div style="padding: 1.5rem;">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                                    <div><strong>ID:</strong> ${vehicle.vehicle_id}</div>
+                                    <div><strong>Registration:</strong> ${vehicle.registration_no}</div>
+                                    <div><strong>VIN:</strong> ${vehicle.vin || 'N/A'}</div>
+                                    <div><strong>Model:</strong> ${vehicle.brand} ${vehicle.model_name} (${vehicle.year})</div>
+                                    <div><strong>Customer:</strong> ${vehicle.customer_name}</div>
+                                    <div><strong>Phone:</strong> ${vehicle.customer_phone}</div>
+                                    <div><strong>Email:</strong> ${vehicle.customer_email}</div>
+                                    <div><strong>Created:</strong> ${API.utils.formatDate(vehicle.created_at)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    const detailsModal = document.createElement('div');
+                    detailsModal.className = 'modal';
+                    detailsModal.innerHTML = detailsHTML;
+                    document.body.appendChild(detailsModal);
+                    detailsModal.style.display = 'block';
+                } else {
+                    API.utils.showAlert('Failed to load vehicle details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading vehicle details:', error);
+                API.utils.showAlert('Error loading vehicle details', 'error');
+            }
+        }
+
+        // Delete vehicle
+        async function deleteVehicle(id) {
+            if (!confirm('Are you sure you want to delete this vehicle? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await API.vehicle.delete(id);
+                if (response.success) {
+                    API.utils.showAlert('Vehicle deleted successfully', 'success');
+                    loadVehicles(currentPage);
+                } else {
+                    API.utils.showAlert('Failed to delete vehicle', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting vehicle:', error);
+                API.utils.showAlert('Error deleting vehicle', 'error');
+            }
+        }
+
+        // Manage models
+        function manageModels() {
+            loadModelsList();
+            modelsModal.style.display = 'block';
+        }
+
+        // Load models list
+        async function loadModelsList() {
+            try {
+                await loadModels();
+                const modelsList = document.getElementById('models-list');
+                modelsList.innerHTML = `
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Brand</th>
+                                <th>Model</th>
+                                <th>Year</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${models.map(model => `
+                                <tr>
+                                    <td>${model.brand}</td>
+                                    <td>${model.model_name}</td>
+                                    <td>${model.year}</td>
+                                    <td>${API.utils.formatDate(model.created_at)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                console.error('Error loading models list:', error);
+            }
+        }
+
+        // Add model
+        function addModel() {
+            modelForm.reset();
+            addModelModal.style.display = 'block';
+        }
+
+        // Handle vehicle form submission
+        vehicleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(vehicleForm);
+            const vehicleData = {
+                customer_id: formData.get('customer_id'),
+                model_id: formData.get('model_id'),
+                registration_no: formData.get('registration_no'),
+                vin: formData.get('vin')
+            };
+
+            const vehicleId = formData.get('vehicle_id');
+
+            try {
+                let response;
+                if (vehicleId) {
+                    response = await API.vehicle.update(vehicleId, vehicleData);
+                } else {
+                    response = await API.vehicle.create(vehicleData);
+                }
+
+                if (response.success) {
+                    API.utils.showAlert(`Vehicle ${vehicleId ? 'updated' : 'created'} successfully`, 'success');
+                    vehicleModal.style.display = 'none';
+                    loadVehicles(currentPage);
+                } else {
+                    API.utils.showAlert(`Failed to ${vehicleId ? 'update' : 'create'} vehicle`, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving vehicle:', error);
+                API.utils.showAlert(`Error ${vehicleId ? 'updating' : 'creating'} vehicle`, 'error');
+            }
+        });
+
+        // Handle model form submission
+        modelForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(modelForm);
+            const modelData = {
+                brand: formData.get('brand'),
+                model_name: formData.get('model_name'),
+                year: formData.get('year')
+            };
+
+            try {
+                const response = await API.vehicle.createModel(modelData);
+                if (response.success) {
+                    API.utils.showAlert('Model created successfully', 'success');
+                    addModelModal.style.display = 'none';
+                    loadModelsList();
+                    loadModels(); // Refresh models for dropdown
+                } else {
+                    API.utils.showAlert('Failed to create model', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating model:', error);
+                API.utils.showAlert('Error creating model', 'error');
+            }
+        });
+
+        // Event listeners
+        document.getElementById('add-vehicle-btn').addEventListener('click', addVehicle);
+        document.getElementById('manage-models-btn').addEventListener('click', manageModels);
+        document.getElementById('add-model-btn').addEventListener('click', addModel);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadVehicles();
+            loadCustomers();
+            loadModels();
+        });
+    </script>
+</body>
+</html>
