@@ -89,6 +89,27 @@
                 </div>
 
                 <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="service-parts-select" class="form-label">Parts Used</label>
+                        <select id="service-parts-select" name="parts_used" class="form-input" multiple>
+                            <!-- Parts will be loaded here -->
+                        </select>
+                        <div id="parts-price-list" style="margin-top: 0.5rem; font-size: 0.95em; color: #555;"></div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="service-price" class="form-label">Service Price *</label>
+                        <input type="number" id="service-price" name="service_price" class="form-input" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="extra-charges" class="form-label">Extra Charges</label>
+                        <input type="number" id="extra-charges" name="extra_charges" class="form-input" min="0" step="0.01">
+                    </div>
+                </div>
+
+                <div class="form-row">
                     <div class="form-group">
                         <label for="requested-date" class="form-label">Requested Date *</label>
                         <input type="date" id="requested-date" name="requested_date" class="form-input" required>
@@ -120,6 +141,12 @@
                             <option value="Cancelled">Cancelled</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label for="service-technician-select" class="form-label">Assign Technician</label>
+                        <select id="service-technician-select" name="technician_id" class="form-input">
+                            <option value="">Select Technician</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
@@ -129,6 +156,67 @@
             </form>
         </div>
     </div>
+
+    <script>
+    // Load parts into multi-select and show prices
+    let allParts = [];
+    async function loadPartsForService() {
+        try {
+            const response = await API.inventory.getAll(1, 100);
+            if (response.success && response.data.parts) {
+                allParts = response.data.parts;
+                const select = document.getElementById('service-parts-select');
+                select.innerHTML = '';
+                allParts.forEach(part => {
+                    select.innerHTML += `<option value="${part.part_id}" data-price="${part.price}">${part.name} (${part.price} ₹)</option>`;
+                });
+            }
+        } catch (err) {
+            console.error('Error loading parts:', err);
+        }
+    }
+
+    // Show selected parts and their prices
+    function updatePartsPriceList() {
+        const select = document.getElementById('service-parts-select');
+        const priceList = document.getElementById('parts-price-list');
+        let totalPartsPrice = 0;
+        let html = '';
+        Array.from(select.selectedOptions).forEach(opt => {
+            const part = allParts.find(p => p.part_id == opt.value);
+            if (part) {
+                html += `<div>${part.name}: ₹${part.price}</div>`;
+                totalPartsPrice += parseFloat(part.price);
+            }
+        });
+        priceList.innerHTML = html || '<span style="color:#888">No parts selected</span>';
+        return totalPartsPrice;
+    }
+
+    // Calculate and show total amount
+    function updateTotalAmount() {
+        const servicePrice = parseFloat(document.getElementById('service-price').value) || 0;
+        const extraCharges = parseFloat(document.getElementById('extra-charges').value) || 0;
+        const partsTotal = updatePartsPriceList();
+        const total = servicePrice + partsTotal + extraCharges;
+        let totalDiv = document.getElementById('service-total-amount');
+        if (!totalDiv) {
+            totalDiv = document.createElement('div');
+            totalDiv.id = 'service-total-amount';
+            totalDiv.style = 'margin-top:1rem;font-weight:bold;font-size:1.1em;color:#007b00;';
+            document.getElementById('service-form').appendChild(totalDiv);
+        }
+        totalDiv.textContent = `Total Amount: ₹${total.toFixed(2)}`;
+    }
+
+    // Event listeners for price calculation
+    document.addEventListener('DOMContentLoaded', () => {
+        loadPartsForService();
+        document.getElementById('service-parts-select').addEventListener('change', updateTotalAmount);
+        document.getElementById('service-price').addEventListener('input', updateTotalAmount);
+        document.getElementById('extra-charges').addEventListener('input', updateTotalAmount);
+    });
+    </script>
 
     <!-- Service Details Modal -->
     <div id="service-details-modal" class="modal">
@@ -396,11 +484,23 @@
 
         // Populate technician select
         function populateTechnicianSelect() {
-            const select = document.getElementById('technician-select');
-            select.innerHTML = '<option value="">Select Technician</option>';
-            technicians.forEach(tech => {
-                select.innerHTML += `<option value="${tech.employee_id}">${tech.name} - ${tech.specialization || 'General'}</option>`;
-            });
+            // populate complete-service modal select
+            const selectComplete = document.getElementById('technician-select');
+            if (selectComplete) {
+                selectComplete.innerHTML = '<option value="">Select Technician</option>';
+                technicians.forEach(tech => {
+                    selectComplete.innerHTML += `<option value="${tech.employee_id}">${tech.name} - ${tech.specialization || 'General'}</option>`;
+                });
+            }
+
+            // populate main service form technician select (if present)
+            const selectService = document.getElementById('service-technician-select');
+            if (selectService) {
+                selectService.innerHTML = '<option value="">Select Technician</option>';
+                technicians.forEach(tech => {
+                    selectService.innerHTML += `<option value="${tech.employee_id}">${tech.name} - ${tech.specialization || 'General'}</option>`;
+                });
+            }
         }
 
         // Add new service request
@@ -540,8 +640,28 @@
                 vehicle_id: formData.get('vehicle_id'),
                 requested_date: formData.get('requested_date'),
                 service_type: formData.get('service_type'),
-                status: formData.get('status')
+                status: formData.get('status'),
+                technician_id: formData.get('technician_id') || null,
+                service_price: parseFloat(formData.get('service_price')) || 0,
+                extra_charges: parseFloat(formData.get('extra_charges')) || 0,
+                parts_used: []
             };
+
+            // Collect selected parts and include price & quantity (default 1)
+            const partsSelect = document.getElementById('service-parts-select');
+            if (partsSelect) {
+                Array.from(partsSelect.selectedOptions).forEach(opt => {
+                    const partId = opt.value;
+                    const part = allParts.find(p => String(p.part_id) === String(partId));
+                    if (part) {
+                        serviceData.parts_used.push({
+                            part_id: part.part_id,
+                            part_price: parseFloat(part.price) || 0,
+                            quantity: 1
+                        });
+                    }
+                });
+            }
 
             const serviceId = formData.get('service_request_id');
 

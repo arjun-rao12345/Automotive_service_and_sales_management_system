@@ -83,15 +83,31 @@ class InvoiceService {
 
   // Create invoice
   async createInvoice(data) {
-    const { service_request_id, total_amount, payment_pending, date, due_date } = data;
-    
+    const { service_request_id, payment_pending, date, due_date } = data;
     try {
+      // Fetch service price and extra charges
+      const [serviceRows] = await promisePool.query(
+        `SELECT service_price, extra_charges FROM Service_Request WHERE service_request_id = ?`,
+        [service_request_id]
+      );
+      if (!serviceRows.length) throw new Error('Service request not found');
+      const { service_price, extra_charges } = serviceRows[0];
+
+      // Sum all parts used for this service
+      const [partsRows] = await promisePool.query(
+        `SELECT SUM(part_price * quantity) AS parts_total FROM Service_Parts_Used WHERE service_request_id = ?`,
+        [service_request_id]
+      );
+      const parts_total = parseFloat(partsRows[0].parts_total) || 0;
+
+      // Calculate total
+      const total_amount = parseFloat(service_price) + parseFloat(extra_charges) + parts_total;
+
       const [result] = await promisePool.query(
         `INSERT INTO Invoice (service_request_id, total_amount, payment_pending, date, due_date) 
          VALUES (?, ?, ?, ?, ?)`,
         [service_request_id, total_amount, payment_pending !== false, date, due_date]
       );
-      
       return await this.getInvoiceById(result.insertId);
     } catch (error) {
       if (error.code === 'ER_DUP_ENTRY') {

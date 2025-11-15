@@ -88,15 +88,26 @@ class ServiceService {
 
   // Create service request
   async createServiceRequest(data) {
-    const { customer_id, vehicle_id, requested_date, service_type, status } = data;
-    
+    const { customer_id, vehicle_id, requested_date, service_type, status, service_price, extra_charges, parts_used } = data;
     try {
       const [result] = await promisePool.query(
-        `INSERT INTO Service_Request (customer_id, vehicle_id, requested_date, service_type, status) 
-         VALUES (?, ?, ?, ?, ?)`,
-        [customer_id, vehicle_id, requested_date, service_type, status || 'Pending']
+        `INSERT INTO Service_Request (customer_id, vehicle_id, requested_date, service_type, status, service_price, extra_charges)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [customer_id, vehicle_id, requested_date, service_type, status || 'Pending', service_price || 0, extra_charges || 0]
       );
-      
+
+      // Save parts used (if any)
+      if (Array.isArray(parts_used) && parts_used.length > 0) {
+        for (const part of parts_used) {
+          // part: { part_id, part_price, quantity }
+          await promisePool.query(
+            `INSERT INTO Service_Parts_Used (service_request_id, part_id, part_price, quantity)
+             VALUES (?, ?, ?, ?)`,
+            [result.insertId, part.part_id, part.part_price, part.quantity || 1]
+          );
+        }
+      }
+
       return await this.getServiceRequestById(result.insertId);
     } catch (error) {
       if (error.code === 'ER_NO_REFERENCED_ROW_2') {

@@ -39,10 +39,11 @@
         <div class="card">
             <div class="card-header">
                 <h2 class="card-title">Parts Inventory</h2>
-                <div style="display: flex; gap: 1rem;">
+                <div style="display: flex; gap: 1rem; align-items: center;">
                     <button id="add-part-btn" class="btn btn-primary">Add New Part</button>
                     <button id="manage-suppliers-btn" class="btn btn-secondary">Manage Suppliers</button>
                     <button id="low-stock-btn" class="btn btn-warning">Low Stock Alert</button>
+                    <input id="parts-search" type="search" placeholder="Search parts..." class="form-input" style="margin-left: 1rem; width: 260px;" />
                 </div>
             </div>
 
@@ -221,6 +222,7 @@
     <script src="js/api.js"></script>
     <script>
         let currentPage = 1;
+        let partsCache = [];
         let suppliers = [];
 
         // DOM elements
@@ -265,7 +267,8 @@
 
                 const response = await API.inventory.getAll(page);
                 if (response.success) {
-                    displayParts(response.data.parts || response.data);
+                    partsCache = response.data.parts || response.data;
+                    displayParts(partsCache);
                     displayPagination(response.data.pagination);
                 } else {
                     API.utils.showAlert('Failed to load parts', 'error');
@@ -311,7 +314,7 @@
                                     <td>${part.part_name}</td>
                                     <td>${part.part_number}</td>
                                     <td>${part.supplier_name}</td>
-                                    <td>${API.utils.formatCurrency(part.price)}</td>
+                                    <td>${part.price}</td>
                                     <td>${part.quantity !== null ? part.quantity : 'N/A'}</td>
                                     <td>
                                         <span style="color: ${statusColor}; font-weight: 500;">
@@ -362,6 +365,30 @@
         function changePage(page) {
             currentPage = page;
             loadParts(currentPage);
+        }
+
+        // Debounce helper
+        function debounce(fn, wait) {
+            let t;
+            return function(...args) {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, args), wait);
+            };
+        }
+
+        // Parts search (filters current page cache)
+        function filterParts(term) {
+            if (!term) {
+                displayParts(partsCache);
+                return;
+            }
+            const q = term.toLowerCase();
+            const filtered = partsCache.filter(p => {
+                return (p.part_name && p.part_name.toLowerCase().includes(q)) ||
+                       (p.part_number && p.part_number.toLowerCase().includes(q)) ||
+                       (p.supplier_name && p.supplier_name.toLowerCase().includes(q));
+            });
+            displayParts(filtered);
         }
 
         // Load suppliers for dropdown
@@ -695,6 +722,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadParts();
             loadSuppliers();
+
+            const searchInput = document.getElementById('parts-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce((e) => {
+                    filterParts(e.target.value.trim());
+                }, 250));
+            }
         });
     </script>
 </body>
