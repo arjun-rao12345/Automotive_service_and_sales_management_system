@@ -83,30 +83,35 @@ class InvoiceService {
 
   // Create invoice
   async createInvoice(data) {
-    const { service_request_id, payment_pending, date, due_date } = data;
+    const { service_request_id, payment_pending, date, due_date, total_amount } = data;
     try {
-      // Fetch service price and extra charges
-      const [serviceRows] = await promisePool.query(
-        `SELECT service_price, extra_charges FROM Service_Request WHERE service_request_id = ?`,
-        [service_request_id]
-      );
-      if (!serviceRows.length) throw new Error('Service request not found');
-      const { service_price, extra_charges } = serviceRows[0];
+      let calculatedTotal = total_amount;
+      
+      // If total_amount not provided, calculate it
+      if (!total_amount || total_amount === 0) {
+        // Fetch service price and extra charges
+        const [serviceRows] = await promisePool.query(
+          `SELECT service_price, extra_charges FROM Service_Request WHERE service_request_id = ?`,
+          [service_request_id]
+        );
+        if (!serviceRows.length) throw new Error('Service request not found');
+        const { service_price, extra_charges } = serviceRows[0];
 
-      // Sum all parts used for this service
-      const [partsRows] = await promisePool.query(
-        `SELECT SUM(part_price * quantity) AS parts_total FROM Service_Parts_Used WHERE service_request_id = ?`,
-        [service_request_id]
-      );
-      const parts_total = parseFloat(partsRows[0].parts_total) || 0;
+        // Sum all parts used for this service
+        const [partsRows] = await promisePool.query(
+          `SELECT SUM(part_price * quantity) AS parts_total FROM Service_Parts_Used WHERE service_request_id = ?`,
+          [service_request_id]
+        );
+        const parts_total = parseFloat(partsRows[0].parts_total) || 0;
 
-      // Calculate total
-      const total_amount = parseFloat(service_price) + parseFloat(extra_charges) + parts_total;
+        // Calculate total
+        calculatedTotal = parseFloat(service_price) + parseFloat(extra_charges) + parts_total;
+      }
 
       const [result] = await promisePool.query(
         `INSERT INTO Invoice (service_request_id, total_amount, payment_pending, date, due_date) 
          VALUES (?, ?, ?, ?, ?)`,
-        [service_request_id, total_amount, payment_pending !== false, date, due_date]
+        [service_request_id, calculatedTotal, payment_pending !== false, date, due_date]
       );
       return await this.getInvoiceById(result.insertId);
     } catch (error) {
@@ -204,6 +209,27 @@ class InvoiceService {
       return payments;
     } catch (error) {
       throw new Error(`Failed to fetch payments: ${error.message}`);
+    }
+  }
+
+  // Delete invoice
+  async deleteInvoice(id) {
+    try {
+      const [result] = await promisePool.query(
+        'DELETE FROM Invoice WHERE invoice_id = ?',
+        [id]
+      );
+      
+      if (result.affectedRows === 0) {
+        throw new Error('Invoice not found');
+      }
+      
+      return { message: 'Invoice deleted successfully' };
+    } catch (error) {
+      if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+        throw new Error('Cannot delete invoice with existing payments. Delete payments first.');
+      }
+      throw error;
     }
   }
 }

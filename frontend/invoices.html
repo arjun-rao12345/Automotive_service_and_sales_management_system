@@ -149,8 +149,8 @@
                             <option value="Credit Card">Credit Card</option>
                             <option value="Debit Card">Debit Card</option>
                             <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="Check">Check</option>
-                            <option value="Online">Online</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -460,11 +460,16 @@
             }
 
             try {
-                // Note: Delete endpoint might not exist, this is a placeholder
-                API.utils.showAlert('Delete functionality not implemented yet', 'warning');
+                const response = await API.invoice.delete(id);
+                if (response.success) {
+                    API.utils.showAlert('Invoice deleted successfully', 'success');
+                    loadInvoices(currentPage, currentPaymentFilter);
+                } else {
+                    API.utils.showAlert('Failed to delete invoice', 'error');
+                }
             } catch (error) {
                 console.error('Error deleting invoice:', error);
-                API.utils.showAlert('Error deleting invoice', 'error');
+                API.utils.showAlert(error.message || 'Error deleting invoice', 'error');
             }
         }
 

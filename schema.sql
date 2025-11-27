@@ -3,6 +3,8 @@
 -- MySQL Database Schema
 -- ============================================================
 
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- Drop tables in reverse order of dependencies (if exists)
 DROP TABLE IF EXISTS Warranty;
 DROP TABLE IF EXISTS Insurance;
@@ -10,6 +12,7 @@ DROP TABLE IF EXISTS Feedback;
 DROP TABLE IF EXISTS Payment;
 DROP TABLE IF EXISTS Invoice;
 DROP TABLE IF EXISTS Inventory;
+DROP TABLE IF EXISTS Service_Parts_Used;
 DROP TABLE IF EXISTS Parts;
 DROP TABLE IF EXISTS Supplier;
 DROP TABLE IF EXISTS Service_Record;
@@ -19,6 +22,8 @@ DROP TABLE IF EXISTS Service_Request;
 DROP TABLE IF EXISTS Vehicle;
 DROP TABLE IF EXISTS Vehicle_Model;
 DROP TABLE IF EXISTS Customer;
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 -- 1. CUSTOMER TABLE
@@ -77,16 +82,21 @@ CREATE TABLE Service_Request (
     service_request_id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
     vehicle_id INT NOT NULL,
+    employee_id INT NULL,
     requested_date DATE NOT NULL,
     service_type VARCHAR(100) NOT NULL,
     status ENUM('Pending', 'In Progress', 'Completed', 'Cancelled') 
         DEFAULT 'Pending' NOT NULL,
+    service_price DECIMAL(10,2) NOT NULL DEFAULT 0,
+    extra_charges DECIMAL(10,2) NOT NULL DEFAULT 0,
+    notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES Customer(customer_id) 
         ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (vehicle_id) REFERENCES Vehicle(vehicle_id) 
         ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX idx_employee_id (employee_id),
     INDEX idx_customer_id (customer_id),
     INDEX idx_vehicle_id (vehicle_id),
     INDEX idx_requested_date (requested_date),
@@ -108,6 +118,11 @@ CREATE TABLE Employee (
     INDEX idx_role (role),
     INDEX idx_employee_phone (phone)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE Service_Request
+    ADD CONSTRAINT fk_service_employee
+    FOREIGN KEY (employee_id) REFERENCES Employee(employee_id)
+        ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- ============================================================
 -- 7. TECHNICIAN TABLE
@@ -197,7 +212,25 @@ CREATE TABLE Inventory (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 11. INVOICE TABLE
+-- 11. SERVICE PARTS USED TABLE
+-- ============================================================
+CREATE TABLE Service_Parts_Used (
+    service_part_id INT AUTO_INCREMENT PRIMARY KEY,
+    service_request_id INT NOT NULL,
+    part_id INT NOT NULL,
+    quantity INT NOT NULL DEFAULT 1 CHECK (quantity > 0),
+    part_price DECIMAL(10,2) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (service_request_id) REFERENCES Service_Request(service_request_id) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (part_id) REFERENCES Parts(part_id) 
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    INDEX idx_service_request_id (service_request_id),
+    INDEX idx_part_id (part_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 12. INVOICE TABLE
 -- ============================================================
 CREATE TABLE Invoice (
     invoice_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -216,7 +249,7 @@ CREATE TABLE Invoice (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 12. PAYMENT TABLE
+-- 13. PAYMENT TABLE
 -- ============================================================
 CREATE TABLE Payment (
     payment_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -235,7 +268,7 @@ CREATE TABLE Payment (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 13. FEEDBACK TABLE
+-- 14. FEEDBACK TABLE
 -- ============================================================
 CREATE TABLE Feedback (
     feedback_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -254,7 +287,7 @@ CREATE TABLE Feedback (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 14. INSURANCE TABLE
+-- 15. INSURANCE TABLE
 -- ============================================================
 CREATE TABLE Insurance (
     insurance_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -273,7 +306,7 @@ CREATE TABLE Insurance (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 15. WARRANTY TABLE
+-- 16. WARRANTY TABLE
 -- ============================================================
 CREATE TABLE Warranty (
     warranty_id INT AUTO_INCREMENT PRIMARY KEY,

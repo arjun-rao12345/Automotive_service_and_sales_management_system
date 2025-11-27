@@ -15,16 +15,29 @@ async function apiRequest(endpoint, options = {}) {
 
     try {
         const response = await fetch(url, config);
-        const data = await response.json();
+        
+        // Handle non-JSON responses
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            throw new Error(text || `HTTP error! status: ${response.status}`);
+        }
 
         if (!response.ok) {
-            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            throw new Error(data.message || data.error || `HTTP error! status: ${response.status}`);
         }
 
         return data;
     } catch (error) {
         console.error(`API request failed: ${endpoint}`, error);
-        throw error;
+        // Re-throw with more context
+        if (error.message) {
+            throw error;
+        }
+        throw new Error(`Network error: ${error.message || 'Failed to connect to server'}`);
     }
 }
 
@@ -111,8 +124,12 @@ const vehicleAPI = {
 
 // Service API functions
 const serviceAPI = {
-    async getAll(page = 1, limit = 10) {
-        return apiRequest(`/services?page=${page}&limit=${limit}`);
+    async getAll(page = 1, limit = 10, status = null) {
+        let url = `/services?page=${page}&limit=${limit}`;
+        if (status) {
+            url += `&status=${encodeURIComponent(status)}`;
+        }
+        return apiRequest(url);
     },
 
     async getById(id) {
@@ -136,6 +153,20 @@ const serviceAPI = {
     async delete(id) {
         return apiRequest(`/services/${id}`, {
             method: 'DELETE'
+        });
+    },
+
+    async createRecord(recordData) {
+        return apiRequest('/services/records', {
+            method: 'POST',
+            body: JSON.stringify(recordData)
+        });
+    },
+
+    async updateRecord(id, recordData) {
+        return apiRequest(`/services/records/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(recordData)
         });
     }
 };
@@ -233,8 +264,13 @@ const inventoryAPI = {
 
 // Invoice API functions
 const invoiceAPI = {
-    async getAll(page = 1, limit = 10) {
-        return apiRequest(`/invoices?page=${page}&limit=${limit}`);
+    async getAll(page = 1, limit = 10, paymentPending = null) {
+        let url = `/invoices?page=${page}&limit=${limit}`;
+        if (paymentPending !== null && paymentPending !== '') {
+            const isPending = paymentPending === 'true' || paymentPending === true;
+            url += `&payment_pending=${isPending}`;
+        }
+        return apiRequest(url);
     },
 
     async getById(id) {
@@ -259,6 +295,17 @@ const invoiceAPI = {
         return apiRequest(`/invoices/${id}`, {
             method: 'DELETE'
         });
+    },
+
+    async createPayment(paymentData) {
+        return apiRequest('/invoices/payments', {
+            method: 'POST',
+            body: JSON.stringify(paymentData)
+        });
+    },
+
+    async getPayments(invoiceId) {
+        return apiRequest(`/invoices/${invoiceId}/payments`);
     }
 };
 
