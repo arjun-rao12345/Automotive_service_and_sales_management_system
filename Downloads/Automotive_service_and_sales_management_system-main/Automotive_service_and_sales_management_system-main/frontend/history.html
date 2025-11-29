@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service History - Automotive Service & Sales Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-brand">
+                🚗 AutoTrade
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="customers.html">Customers</a></li>
+                <li><a href="vehicles.html">Vehicles</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="history.html" class="active">History</a></li>
+                <li><a href="employees.html">Employees</a></li>
+                <li><a href="inventory.html">Inventory</a></li>
+                <li><a href="invoices.html">Invoices</a></li>
+                <li><a href="feedback.html">Feedback</a></li>
+                <li><a href="insurance.html">Insurance</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>Service History</h1>
+            <p>Complete timeline of all service-related events</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">History Timeline</h2>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <input type="text" id="search-input" class="form-input" placeholder="Search by customer, vehicle, or service type..." style="width: 300px;">
+                    <button id="refresh-btn" class="btn btn-secondary">Refresh</button>
+                </div>
+            </div>
+
+            <!-- History Timeline -->
+            <div id="history-container" style="padding: 1.5rem;">
+                <!-- History will be loaded here -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination-container" class="pagination">
+                <!-- Pagination will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alert-container" style="position: fixed; top: 20px; right: 20px; z-index: 1000;"></div>
+
+    <!-- Load API utilities -->
+    <script src="js/api.js"></script>
+    <script>
+        let currentPage = 1;
+        let allHistory = [];
+        let historyLoaded = false;
+
+        // DOM elements
+        const historyContainer = document.getElementById('history-container');
+        const paginationContainer = document.getElementById('pagination-container');
+        const searchInput = document.getElementById('search-input');
+        const refreshBtn = document.getElementById('refresh-btn');
+
+        // Load history
+        async function loadHistory(page = 1, forceReload = false) {
+            // If already loaded and not forcing reload, use cached data
+            if (historyLoaded && !forceReload && allHistory.length > 0) {
+                displayHistory(allHistory);
+                return;
+            }
+
+            try {
+                API.utils.showLoading(historyContainer);
+
+                const response = await API.history.getAll(page, 50);
+                if (response.success) {
+                    const historyData = response.data.history || response.data || [];
+                    // Merge with existing history if reloading
+                    if (forceReload || !historyLoaded) {
+                        allHistory = historyData;
+                    } else {
+                        // Merge new data with existing, avoiding duplicates
+                        const existingIds = new Set(allHistory.map(h => h.history_id));
+                        historyData.forEach(h => {
+                            if (!existingIds.has(h.history_id)) {
+                                allHistory.push(h);
+                            }
+                        });
+                        // Sort by timestamp
+                        allHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    }
+                    historyLoaded = true;
+                    displayHistory(allHistory);
+                    displayPagination(response.data.pagination);
+                } else {
+                    API.utils.showAlert('Failed to load history', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+                // Don't show error if table doesn't exist yet
+                if (allHistory.length === 0) {
+                    historyContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #6b7280;">No history records found. History will appear here as services are created and updated.</p>';
+                } else {
+                    // Show cached data even if refresh fails
+                    displayHistory(allHistory);
+                }
+            }
+        }
+
+        // Display history in timeline format
+        function displayHistory(history) {
+            if (history.length === 0) {
+                historyContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #6b7280;">No history records found.</p>';
+                return;
+            }
+
+            // Group by date
+            const groupedByDate = {};
+            history.forEach(entry => {
+                const date = new Date(entry.timestamp).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                if (!groupedByDate[date]) {
+                    groupedByDate[date] = [];
+                }
+                groupedByDate[date].push(entry);
+            });
+
+            let timelineHTML = '<div style="position: relative; padding-left: 2rem;">';
+            
+            Object.keys(groupedByDate).forEach((date, dateIndex) => {
+                const entries = groupedByDate[date];
+                
+                timelineHTML += `
+                    <div style="margin-bottom: 2rem;">
+                        <div style="position: absolute; left: 0; width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #3b82f6;"></div>
+                        <div style="font-weight: 600; color: #1f2937; margin-bottom: 1rem; font-size: 1.1rem;">${date}</div>
+                `;
+
+                entries.forEach(entry => {
+                    const time = new Date(entry.timestamp).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    const actionColors = {
+                        'Created': '#10b981',
+                        'Updated': '#3b82f6',
+                        'StatusChanged': '#f59e0b',
+                        'Closed': '#ef4444'
+                    };
+
+                    const actionIcons = {
+                        'Created': '✨',
+                        'Updated': '✏️',
+                        'StatusChanged': '🔄',
+                        'Closed': '🔒'
+                    };
+
+                    timelineHTML += `
+                        <div style="background: #f9fafb; border-left: 3px solid ${actionColors[entry.action] || '#6b7280'}; padding: 1rem; margin-bottom: 0.75rem; border-radius: 0.375rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.2rem;">${actionIcons[entry.action] || '📝'}</span>
+                                    <span style="font-weight: 600; color: ${actionColors[entry.action] || '#6b7280'};">
+                                        ${entry.action}
+                                    </span>
+                                </div>
+                                <span style="color: #6b7280; font-size: 0.875rem;">${time}</span>
+                            </div>
+                            <div style="color: #374151; margin-bottom: 0.5rem;">
+                                <strong>Service:</strong> ${entry.service_type} | 
+                                <strong>Customer:</strong> ${entry.customer_name} | 
+                                <strong>Vehicle:</strong> ${entry.registration_no}
+                            </div>
+                            ${entry.previous_status || entry.new_status ? `
+                                <div style="color: #6b7280; font-size: 0.875rem;">
+                                    ${entry.previous_status ? `<span style="text-decoration: line-through; color: #ef4444;">${entry.previous_status}</span>` : ''}
+                                    ${entry.previous_status && entry.new_status ? ' → ' : ''}
+                                    ${entry.new_status ? `<span style="color: #10b981; font-weight: 600;">${entry.new_status}</span>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+
+                timelineHTML += '</div>';
+            });
+
+            timelineHTML += '</div>';
+            historyContainer.innerHTML = timelineHTML;
+        }
+
+        // Display pagination
+        function displayPagination(pagination) {
+            if (!pagination || pagination.totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            if (pagination.page > 1) {
+                paginationHTML += `<button class="pagination-btn" onclick="changePage(${pagination.page - 1})">Previous</button>`;
+            }
+
+            for (let i = Math.max(1, pagination.page - 2); i <= Math.min(pagination.totalPages, pagination.page + 2); i++) {
+                paginationHTML += `<button class="pagination-btn ${i === pagination.page ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            }
+
+            if (pagination.page < pagination.totalPages) {
+                paginationHTML += `<button class="pagination-btn" onclick="changePage(${pagination.page + 1})">Next</button>`;
+            }
+
+            paginationContainer.innerHTML = paginationHTML;
+        }
+
+        // Change page
+        function changePage(page) {
+            currentPage = page;
+            loadHistory(currentPage);
+        }
+
+        // Search functionality
+        function filterHistory() {
+            const searchTerm = searchInput.value.toLowerCase();
+            if (!searchTerm) {
+                displayHistory(allHistory);
+                return;
+            }
+
+            const filtered = allHistory.filter(entry => 
+                entry.customer_name.toLowerCase().includes(searchTerm) ||
+                entry.registration_no.toLowerCase().includes(searchTerm) ||
+                entry.service_type.toLowerCase().includes(searchTerm) ||
+                entry.action.toLowerCase().includes(searchTerm)
+            );
+
+            displayHistory(filtered);
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', filterHistory);
+        refreshBtn.addEventListener('click', () => {
+            currentPage = 1;
+            historyLoaded = false; // Force reload
+            loadHistory(currentPage, true);
+        });
+
+        // Reload history when page becomes visible (handles navigation back)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && !historyLoaded) {
+                loadHistory(currentPage, true);
+            }
+        });
+
+        // Reload history when window gains focus
+        window.addEventListener('focus', () => {
+            if (!historyLoaded) {
+                loadHistory(currentPage, true);
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
+            
+            // Set active navbar link
+            const currentPage = window.location.pathname.split('/').pop() || 'history.html';
+            const navLinks = document.querySelectorAll('.navbar-menu a');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

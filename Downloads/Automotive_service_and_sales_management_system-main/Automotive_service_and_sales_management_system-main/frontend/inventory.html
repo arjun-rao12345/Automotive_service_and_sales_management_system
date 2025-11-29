@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory - Automotive Service & Sales Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-brand">
+                🚗 AutoTrade
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="customers.html">Customers</a></li>
+                <li><a href="vehicles.html">Vehicles</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="history.html">History</a></li>
+                <li><a href="employees.html">Employees</a></li>
+                <li><a href="inventory.html">Inventory</a></li>
+                <li><a href="invoices.html">Invoices</a></li>
+                <li><a href="feedback.html">Feedback</a></li>
+                <li><a href="insurance.html">Insurance</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>Inventory Management</h1>
+            <p>Manage parts, suppliers, and stock levels</p>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Parts Inventory</h2>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button id="add-part-btn" class="btn btn-primary">Add New Part</button>
+                    <button id="manage-suppliers-btn" class="btn btn-secondary">Manage Suppliers</button>
+                    <button id="low-stock-btn" class="btn btn-warning">Low Stock Alert</button>
+                    <input id="parts-search" type="search" placeholder="Search parts..." class="form-input" style="margin-left: 1rem; width: 260px;" />
+                </div>
+            </div>
+
+            <!-- Parts Table -->
+            <div id="parts-table-container">
+                <!-- Table will be loaded here -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination-container" class="pagination">
+                <!-- Pagination will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Part Modal -->
+    <div id="part-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="part-modal-title" class="modal-title">Add Part</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="part-form">
+                <input type="hidden" id="part-id" name="part_id">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="part-name" class="form-label">Part Name *</label>
+                        <input type="text" id="part-name" name="part_name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="part-number" class="form-label">Part Number *</label>
+                        <input type="text" id="part-number" name="part_number" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="supplier-select" class="form-label">Supplier *</label>
+                        <select id="supplier-select" name="supplier_id" class="form-input" required>
+                            <option value="">Select Supplier</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="part-price" class="form-label">Price *</label>
+                        <input type="number" id="part-price" name="price" class="form-input" step="0.01" min="0" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="part-description" class="form-label">Description</label>
+                    <textarea id="part-description" name="description" class="form-input" rows="3"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Part</button>
+                    <button type="button" id="part-cancel-btn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Suppliers Modal -->
+    <div id="suppliers-modal" class="modal">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h2 class="modal-title">Suppliers</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div style="padding: 1.5rem; flex: 1; overflow-y: auto;">
+                <button id="add-supplier-btn" class="btn btn-primary" style="margin-bottom: 1rem;">Add New Supplier</button>
+                <div id="suppliers-list">
+                    <!-- Suppliers will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Supplier Modal -->
+    <div id="add-supplier-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Supplier</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="supplier-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="supplier-name" class="form-label">Supplier Name *</label>
+                        <input type="text" id="supplier-name" name="supplier_name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="supplier-contact" class="form-label">Contact Person</label>
+                        <input type="text" id="supplier-contact" name="contact" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="supplier-phone" class="form-label">Phone</label>
+                        <input type="tel" id="supplier-phone" name="phone" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="supplier-email" class="form-label">Email</label>
+                        <input type="email" id="supplier-email" name="email" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="supplier-address" class="form-label">Address</label>
+                    <textarea id="supplier-address" name="address" class="form-input" rows="3"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Save Supplier</button>
+                    <button type="button" id="supplier-cancel-btn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Inventory Modal -->
+    <div id="inventory-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Update Inventory</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="inventory-form">
+                <input type="hidden" id="inventory-id" name="inventory_id">
+                <input type="hidden" id="inventory-part-id" name="part_id">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="quantity" class="form-label">Quantity *</label>
+                        <input type="number" id="quantity" name="quantity" class="form-input" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reorder-level" class="form-label">Reorder Level</label>
+                        <input type="number" id="reorder-level" name="reorder_level" class="form-input" min="0" value="10">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="last-restocked" class="form-label">Last Restocked</label>
+                        <input type="date" id="last-restocked" name="last_restocked" class="form-input">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">Update Inventory</button>
+                    <button type="button" id="inventory-cancel-btn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Low Stock Modal -->
+    <div id="low-stock-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Low Stock Alert</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div id="low-stock-content" style="padding: 1.5rem;">
+                <!-- Low stock items will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alert-container" style="position: fixed; top: 20px; right: 20px; z-index: 1000;"></div>
+
+    <!-- Load API utilities -->
+    <script src="js/api.js"></script>
+    <script>
+        let currentPage = 1;
+        let partsCache = [];
+        let suppliers = [];
+
+        // DOM elements
+        const partsTableContainer = document.getElementById('parts-table-container');
+        const paginationContainer = document.getElementById('pagination-container');
+        const partModal = document.getElementById('part-modal');
+        const partForm = document.getElementById('part-form');
+        const suppliersModal = document.getElementById('suppliers-modal');
+        const addSupplierModal = document.getElementById('add-supplier-modal');
+        const supplierForm = document.getElementById('supplier-form');
+        const inventoryModal = document.getElementById('inventory-modal');
+        const inventoryForm = document.getElementById('inventory-form');
+        const lowStockModal = document.getElementById('low-stock-modal');
+
+        // Modal controls
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.onclick = () => {
+                partModal.style.display = 'none';
+                suppliersModal.style.display = 'none';
+                addSupplierModal.style.display = 'none';
+                inventoryModal.style.display = 'none';
+                lowStockModal.style.display = 'none';
+            };
+        });
+
+        document.getElementById('part-cancel-btn').onclick = () => partModal.style.display = 'none';
+        document.getElementById('supplier-cancel-btn').onclick = () => addSupplierModal.style.display = 'none';
+        document.getElementById('inventory-cancel-btn').onclick = () => inventoryModal.style.display = 'none';
+
+        window.onclick = (event) => {
+            if (event.target === partModal) partModal.style.display = 'none';
+            if (event.target === suppliersModal) suppliersModal.style.display = 'none';
+            if (event.target === addSupplierModal) addSupplierModal.style.display = 'none';
+            if (event.target === inventoryModal) inventoryModal.style.display = 'none';
+            if (event.target === lowStockModal) lowStockModal.style.display = 'none';
+        };
+
+        // Load parts
+        async function loadParts(page = 1) {
+            try {
+                API.utils.showLoading(partsTableContainer);
+
+                const response = await API.inventory.getAll(page);
+                if (response.success) {
+                    partsCache = response.data.parts || response.data;
+                    displayParts(partsCache);
+                    displayPagination(response.data.pagination);
+                } else {
+                    API.utils.showAlert('Failed to load parts', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading parts:', error);
+                API.utils.showAlert('Error loading parts', 'error');
+                partsTableContainer.innerHTML = '<p>Error loading parts. Please try again.</p>';
+            }
+        }
+
+        // Display parts in table
+        function displayParts(parts) {
+            if (parts.length === 0) {
+                partsTableContainer.innerHTML = '<p>No parts found.</p>';
+                return;
+            }
+
+            const tableHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Part Name</th>
+                            <th>Part Number</th>
+                            <th>Supplier</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${parts.map(part => {
+                            const stockStatus = part.quantity !== null ?
+                                (part.quantity <= part.reorder_level ? 'Low Stock' : 'In Stock') : 'No Inventory';
+                            const statusColor = part.quantity !== null ?
+                                (part.quantity <= part.reorder_level ? '#dc2626' : '#16a34a') : '#6b7280';
+
+                            return `
+                                <tr>
+                                    <td>${part.part_id}</td>
+                                    <td>${part.part_name}</td>
+                                    <td>${part.part_number}</td>
+                                    <td>${part.supplier_name}</td>
+                                    <td>${part.price}</td>
+                                    <td>${part.quantity !== null ? part.quantity : 'N/A'}</td>
+                                    <td>
+                                        <span style="color: ${statusColor}; font-weight: 500;">
+                                            ${stockStatus}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button onclick="editPart(${part.part_id})" class="btn btn-secondary btn-sm">Edit</button>
+                                        <button onclick="viewPart(${part.part_id})" class="btn btn-warning btn-sm">View</button>
+                                        <button onclick="manageInventory(${part.part_id}, ${part.inventory_id || 'null'}, ${part.quantity || 0}, ${part.reorder_level || 10})" class="btn btn-info btn-sm">Stock</button>
+                                        <button onclick="deletePart(${part.part_id})" class="btn btn-danger btn-sm">Delete</button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            partsTableContainer.innerHTML = tableHTML;
+        }
+
+        // Display pagination
+        function displayPagination(pagination) {
+            if (!pagination || pagination.totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            if (pagination.page > 1) {
+                paginationHTML += `<button class="pagination-btn" onclick="changePage(${pagination.page - 1})">Previous</button>`;
+            }
+
+            for (let i = Math.max(1, pagination.page - 2); i <= Math.min(pagination.totalPages, pagination.page + 2); i++) {
+                paginationHTML += `<button class="pagination-btn ${i === pagination.page ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            }
+
+            if (pagination.page < pagination.totalPages) {
+                paginationHTML += `<button class="pagination-btn" onclick="changePage(${pagination.page + 1})">Next</button>`;
+            }
+
+            paginationContainer.innerHTML = paginationHTML;
+        }
+
+        // Change page
+        function changePage(page) {
+            currentPage = page;
+            loadParts(currentPage);
+        }
+
+        // Debounce helper
+        function debounce(fn, wait) {
+            let t;
+            return function(...args) {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, args), wait);
+            };
+        }
+
+        // Parts search (filters current page cache)
+        function filterParts(term) {
+            if (!term) {
+                displayParts(partsCache);
+                return;
+            }
+            const q = term.toLowerCase();
+            const filtered = partsCache.filter(p => {
+                return (p.part_name && p.part_name.toLowerCase().includes(q)) ||
+                       (p.part_number && p.part_number.toLowerCase().includes(q)) ||
+                       (p.supplier_name && p.supplier_name.toLowerCase().includes(q));
+            });
+            displayParts(filtered);
+        }
+
+        // Load suppliers for dropdown
+        async function loadSuppliers() {
+            try {
+                const response = await API.inventory.getAllSuppliers();
+                if (response.success) {
+                    suppliers = response.data;
+                    populateSupplierSelect();
+                }
+            } catch (error) {
+                console.error('Error loading suppliers:', error);
+            }
+        }
+
+        // Populate supplier select
+        function populateSupplierSelect() {
+            const select = document.getElementById('supplier-select');
+            select.innerHTML = '<option value="">Select Supplier</option>';
+            suppliers.forEach(supplier => {
+                select.innerHTML += `<option value="${supplier.supplier_id}">${supplier.supplier_name}</option>`;
+            });
+        }
+
+        // Add new part
+        function addPart() {
+            document.getElementById('part-modal-title').textContent = 'Add Part';
+            partForm.reset();
+            document.getElementById('part-id').value = '';
+            partModal.style.display = 'block';
+        }
+
+        // Edit part
+        async function editPart(id) {
+            try {
+                const response = await API.inventory.getById(id);
+                if (response.success) {
+                    const part = response.data;
+                    document.getElementById('part-modal-title').textContent = 'Edit Part';
+                    document.getElementById('part-id').value = part.part_id;
+                    document.getElementById('part-name').value = part.part_name;
+                    document.getElementById('part-number').value = part.part_number;
+                    document.getElementById('supplier-select').value = part.supplier_id;
+                    document.getElementById('part-price').value = part.price;
+                    document.getElementById('part-description').value = part.description || '';
+                    partModal.style.display = 'block';
+                } else {
+                    API.utils.showAlert('Failed to load part details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading part:', error);
+                API.utils.showAlert('Error loading part details', 'error');
+            }
+        }
+
+        // View part details
+        async function viewPart(id) {
+            try {
+                const response = await API.inventory.getById(id);
+                if (response.success) {
+                    const part = response.data;
+                    let detailsHTML = `
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h2 class="modal-title">Part Details</h2>
+                                <span class="close" onclick="this.closest('.modal').style.display='none'">&times;</span>
+                            </div>
+                            <div style="padding: 1.5rem;">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                                    <div><strong>ID:</strong> ${part.part_id}</div>
+                                    <div><strong>Name:</strong> ${part.part_name}</div>
+                                    <div><strong>Part Number:</strong> ${part.part_number}</div>
+                                    <div><strong>Price:</strong> ${API.utils.formatCurrency(part.price)}</div>
+                                    <div><strong>Supplier:</strong> ${part.supplier_name}</div>
+                                    <div><strong>Supplier Contact:</strong> ${part.supplier_contact || 'N/A'}</div>
+                                    <div><strong>Stock Quantity:</strong> ${part.quantity !== null ? part.quantity : 'Not tracked'}</div>
+                                    <div><strong>Reorder Level:</strong> ${part.reorder_level || 'N/A'}</div>
+                                    <div><strong>Last Restocked:</strong> ${part.last_restocked ? API.utils.formatDate(part.last_restocked) : 'N/A'}</div>
+                                </div>
+                                <div><strong>Description:</strong> ${part.description || 'No description'}</div>
+                            </div>
+                        </div>
+                    `;
+
+                    const detailsModal = document.createElement('div');
+                    detailsModal.className = 'modal';
+                    detailsModal.innerHTML = detailsHTML;
+                    document.body.appendChild(detailsModal);
+                    detailsModal.style.display = 'block';
+                } else {
+                    API.utils.showAlert('Failed to load part details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading part details:', error);
+                API.utils.showAlert('Error loading part details', 'error');
+            }
+        }
+
+        // Manage inventory
+        function manageInventory(partId, inventoryId, currentQuantity, reorderLevel) {
+            document.getElementById('inventory-part-id').value = partId;
+            document.getElementById('inventory-id').value = inventoryId || '';
+            document.getElementById('quantity').value = currentQuantity || 0;
+            document.getElementById('reorder-level').value = reorderLevel || 10;
+            document.getElementById('last-restocked').value = new Date().toISOString().split('T')[0];
+            inventoryModal.style.display = 'block';
+        }
+
+        // Delete part
+        async function deletePart(id) {
+            if (!confirm('Are you sure you want to delete this part? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await API.inventory.delete(id);
+                if (response.success) {
+                    API.utils.showAlert('Part deleted successfully', 'success');
+                    loadParts(currentPage);
+                } else {
+                    API.utils.showAlert('Failed to delete part', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting part:', error);
+                API.utils.showAlert('Error deleting part', 'error');
+            }
+        }
+
+        // Manage suppliers
+        function manageSuppliers() {
+            loadSuppliersList();
+            suppliersModal.style.display = 'block';
+        }
+
+        // Load suppliers list
+        async function loadSuppliersList() {
+            try {
+                await loadSuppliers();
+                const suppliersList = document.getElementById('suppliers-list');
+
+                suppliersList.innerHTML = `
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${suppliers.map(supplier => `
+                                <tr>
+                                    <td>${supplier.supplier_name}</td>
+                                    <td>${supplier.contact || '-'}</td>
+                                    <td>${supplier.phone || '-'}</td>
+                                    <td>${supplier.email || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                console.error('Error loading suppliers list:', error);
+            }
+        }
+
+        // Add supplier
+        function addSupplier() {
+            supplierForm.reset();
+            addSupplierModal.style.display = 'block';
+        }
+
+        // Show low stock items
+        async function showLowStock() {
+            try {
+                const response = await API.inventory.getLowStock();
+                if (response.success) {
+                    const lowStockItems = response.data;
+                    const lowStockContent = document.getElementById('low-stock-content');
+
+                    if (lowStockItems.length === 0) {
+                        lowStockContent.innerHTML = '<p>No low stock items found.</p>';
+                    } else {
+                        lowStockContent.innerHTML = `
+                            <div style="margin-bottom: 1rem; color: #dc2626; font-weight: 500;">
+                                ${lowStockItems.length} item(s) are below reorder level
+                            </div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Part Name</th>
+                                        <th>Part Number</th>
+                                        <th>Current Stock</th>
+                                        <th>Reorder Level</th>
+                                        <th>Supplier</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${lowStockItems.map(item => `
+                                        <tr>
+                                            <td>${item.part_name}</td>
+                                            <td>${item.part_number}</td>
+                                            <td style="color: #dc2626; font-weight: 500;">${item.quantity}</td>
+                                            <td>${item.reorder_level}</td>
+                                            <td>${item.supplier_name}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    }
+
+                    lowStockModal.style.display = 'block';
+                } else {
+                    API.utils.showAlert('Failed to load low stock items', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading low stock items:', error);
+                API.utils.showAlert('Error loading low stock items', 'error');
+            }
+        }
+
+        // Handle part form submission
+        partForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(partForm);
+            const partData = {
+                part_name: formData.get('part_name'),
+                part_number: formData.get('part_number'),
+                supplier_id: formData.get('supplier_id'),
+                price: formData.get('price'),
+                description: formData.get('description')
+            };
+
+            const partId = formData.get('part_id');
+
+            try {
+                let response;
+                if (partId) {
+                    response = await API.inventory.update(partId, partData);
+                } else {
+                    response = await API.inventory.create(partData);
+                }
+
+                if (response.success) {
+                    API.utils.showAlert(`Part ${partId ? 'updated' : 'created'} successfully`, 'success');
+                    partModal.style.display = 'none';
+                    loadParts(currentPage);
+                } else {
+                    API.utils.showAlert(`Failed to ${partId ? 'update' : 'create'} part`, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving part:', error);
+                API.utils.showAlert(`Error ${partId ? 'updating' : 'creating'} part`, 'error');
+            }
+        });
+
+        // Handle supplier form submission
+        supplierForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(supplierForm);
+            const supplierData = {
+                supplier_name: formData.get('supplier_name'),
+                contact: formData.get('contact'),
+                phone: formData.get('phone'),
+                email: formData.get('email'),
+                address: formData.get('address')
+            };
+
+            try {
+                const response = await API.inventory.createSupplier(supplierData);
+                if (response.success) {
+                    API.utils.showAlert('Supplier created successfully', 'success');
+                    addSupplierModal.style.display = 'none';
+                    loadSuppliersList();
+                    loadSuppliers(); // Refresh suppliers for dropdown
+                } else {
+                    API.utils.showAlert('Failed to create supplier', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating supplier:', error);
+                API.utils.showAlert('Error creating supplier', 'error');
+            }
+        });
+
+        // Handle inventory form submission
+        inventoryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(inventoryForm);
+            const inventoryData = {
+                part_id: formData.get('part_id'),
+                quantity: formData.get('quantity'),
+                reorder_level: formData.get('reorder_level'),
+                last_restocked: formData.get('last_restocked')
+            };
+
+            const inventoryId = formData.get('inventory_id');
+
+            try {
+                let response;
+                if (inventoryId) {
+                    response = await API.inventory.updateInventory(inventoryId, inventoryData);
+                } else {
+                    response = await API.inventory.createInventory(inventoryData);
+                }
+
+                if (response.success) {
+                    API.utils.showAlert('Inventory updated successfully', 'success');
+                    inventoryModal.style.display = 'none';
+                    loadParts(currentPage);
+                } else {
+                    API.utils.showAlert('Failed to update inventory', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating inventory:', error);
+                API.utils.showAlert('Error updating inventory', 'error');
+            }
+        });
+
+        // Event listeners
+        document.getElementById('add-part-btn').addEventListener('click', addPart);
+        document.getElementById('manage-suppliers-btn').addEventListener('click', manageSuppliers);
+        document.getElementById('add-supplier-btn').addEventListener('click', addSupplier);
+        document.getElementById('low-stock-btn').addEventListener('click', showLowStock);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadParts();
+            loadSuppliers();
+
+            const searchInput = document.getElementById('parts-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce((e) => {
+                    filterParts(e.target.value.trim());
+                }, 250));
+            }
+            
+            // Set active navbar link
+            const currentPage = window.location.pathname.split('/').pop() || 'inventory.html';
+            const navLinks = document.querySelectorAll('.navbar-menu a');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
